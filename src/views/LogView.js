@@ -38,13 +38,22 @@ export function LogView() {
               </div>
 
               <div class="form-group">
-                <label class="form-label">Hora</label>
+                <label class="form-label">Hora Inicio</label>
                 <input 
                   type="time" 
                   id="workoutTime" 
                   class="form-input" 
                   value="${getCurrentTime()}"
                   required
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Hora Fin</label>
+                <input 
+                  type="time" 
+                  id="workoutEndTime" 
+                  class="form-input" 
                 />
               </div>
 
@@ -127,6 +136,37 @@ export function setupLogView() {
 
   // Setup initial exercise input handlers
   setupExerciseInputHandlers(exercisesContainer);
+
+  // Setup duration auto-calculation
+  const startTimeInput = document.getElementById('workoutTime');
+  const endTimeInput = document.getElementById('workoutEndTime');
+  const durationInput = document.getElementById('workoutDuration');
+
+  function updateDuration() {
+    const start = startTimeInput.value;
+    const end = endTimeInput.value;
+
+    if (start && end) {
+      const [startH, startM] = start.split(':').map(Number);
+      const [endH, endM] = end.split(':').map(Number);
+
+      const startMinutes = startH * 60 + startM;
+      let endMinutes = endH * 60 + endM;
+
+      // Handle overnight (if end time is earlier than start time, assume next day)
+      if (endMinutes < startMinutes) {
+        endMinutes += 24 * 60;
+      }
+
+      const duration = endMinutes - startMinutes;
+      if (duration > 0) {
+        durationInput.value = duration;
+      }
+    }
+  }
+
+  startTimeInput.addEventListener('change', updateDuration);
+  endTimeInput.addEventListener('change', updateDuration);
 
   // Add exercise button
   addExerciseBtn.addEventListener('click', () => {

@@ -29,7 +29,7 @@ export function createExerciseInput(index, exercise = null) {
           <option value="strength" ${exerciseType === 'strength' ? 'selected' : ''}>💪 Fuerza</option>
           <option value="cardio" ${exerciseType === 'cardio' ? 'selected' : ''}>🏃 Cardio</option>
         </select>
-        <button class="btn btn-sm btn-danger remove-exercise" data-index="${index}">
+        <button type="button" class="btn btn-sm btn-danger remove-exercise" data-index="${index}">
           🗑️
         </button>
       </div>
@@ -38,7 +38,7 @@ export function createExerciseInput(index, exercise = null) {
         <div class="sets-container" data-index="${index}">
           ${renderSets(sets, index)}
         </div>
-        <button class="btn btn-sm btn-secondary add-set" data-index="${index}">
+        <button type="button" class="btn btn-sm btn-secondary add-set" data-index="${index}">
           ➕ Agregar Set
         </button>
       </div>
@@ -89,7 +89,7 @@ function renderSets(sets, exerciseIndex) {
         data-set="${setIndex}"
       />
       ${setIndex > 0 ? `
-        <button class="btn btn-sm btn-danger remove-set" data-exercise="${exerciseIndex}" data-set="${setIndex}">
+        <button type="button" class="btn btn-sm btn-danger remove-set" data-exercise="${exerciseIndex}" data-set="${setIndex}">
           ✕
         </button>
       ` : ''}
@@ -159,7 +159,7 @@ export function setupExerciseInputHandlers(container) {
             data-exercise="${index}"
             data-set="${setCount}"
           />
-          <button class="btn btn-sm btn-danger remove-set" data-exercise="${index}" data-set="${setCount}">
+          <button type="button" class="btn btn-sm btn-danger remove-set" data-exercise="${index}" data-set="${setCount}">
             ✕
           </button>
         </div>
