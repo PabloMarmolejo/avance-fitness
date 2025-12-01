@@ -6,7 +6,7 @@ import { createBottomNav } from './components/BottomNav.js';
 import { DashboardView } from './views/Dashboard.js';
 import { WorkoutView } from './views/WorkoutView.js';
 import { LogView, setupLogView } from './views/LogView.js';
-import { RoutinesView } from './views/RoutinesView.js';
+import { RoutinesView, setupRoutinesView } from './views/RoutinesView.js';
 import { ProgressView } from './views/ProgressView.js';
 
 // App entry point
@@ -48,8 +48,14 @@ router.on('/log', () => {
   }, 0);
 });
 
-router.on('/routines', () => {
-  app.innerHTML = RoutinesView();
+router.on('/routines', async () => {
+  app.innerHTML = await RoutinesView();
+  // Setup routines handlers after DOM is ready
+  setTimeout(() => {
+    if (typeof setupRoutinesView === 'function') {
+      setupRoutinesView();
+    }
+  }, 0);
 });
 
 router.on('/progress', () => {
