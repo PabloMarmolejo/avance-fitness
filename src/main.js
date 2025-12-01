@@ -5,7 +5,7 @@ import { router } from './router/router.js';
 import { createBottomNav } from './components/BottomNav.js';
 import { DashboardView } from './views/Dashboard.js';
 import { WorkoutView } from './views/WorkoutView.js';
-import { LogView } from './views/LogView.js';
+import { LogView, setupLogView } from './views/LogView.js';
 import { RoutinesView } from './views/RoutinesView.js';
 import { ProgressView } from './views/ProgressView.js';
 
@@ -40,6 +40,12 @@ router.on('/workout', () => {
 
 router.on('/log', () => {
   app.innerHTML = LogView();
+  // Setup form handlers after DOM is ready
+  setTimeout(() => {
+    if (typeof setupLogView === 'function') {
+      setupLogView();
+    }
+  }, 0);
 });
 
 router.on('/routines', () => {
