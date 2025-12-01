@@ -1,6 +1,7 @@
 import './styles/index.css';
 import { initDB } from './db/database.js';
 import { initializeDefaultSettings } from './db/models.js';
+import { loadInitialExercises } from './db/exerciseLibraryModels.js';
 import { router } from './router/router.js';
 import { createBottomNav } from './components/BottomNav.js';
 import { DashboardView } from './views/Dashboard.js';
@@ -9,22 +10,6 @@ import { LogView, setupLogView } from './views/LogView.js';
 import { RoutinesView, setupRoutinesView } from './views/RoutinesView.js';
 import { ProgressView } from './views/ProgressView.js';
 
-// App entry point
-console.log('🏋️ Avance Fitness - Iniciando aplicación...');
-
-// Initialize IndexedDB
-async function initApp() {
-  try {
-    await initDB();
-    await initializeDefaultSettings();
-    console.log('✅ Base de datos inicializada correctamente');
-  } catch (error) {
-    console.error('❌ Error al inicializar base de datos:', error);
-  }
-}
-
-// Initialize app
-initApp();
 
 // Get app container
 const app = document.querySelector('#app');

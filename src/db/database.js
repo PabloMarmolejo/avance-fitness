@@ -6,7 +6,7 @@
  */
 
 const DB_NAME = 'AvanceFitnessDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let db = null;
 
@@ -100,6 +100,17 @@ export async function initDB() {
             if (!db.objectStoreNames.contains('settings')) {
                 db.createObjectStore('settings', { keyPath: 'key' });
                 console.log('✅ Store "settings" creada');
+            }
+
+            // Store: exerciseLibrary
+            if (!db.objectStoreNames.contains('exerciseLibrary')) {
+                const exLibStore = db.createObjectStore('exerciseLibrary', {
+                    keyPath: 'id',
+                    autoIncrement: true
+                });
+                exLibStore.createIndex('name', 'name', { unique: false });
+                exLibStore.createIndex('category', 'category', { unique: false });
+                console.log('✅ Store "exerciseLibrary" creada');
             }
 
             console.log('✅ Esquema de base de datos actualizado');
