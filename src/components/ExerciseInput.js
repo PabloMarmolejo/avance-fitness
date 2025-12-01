@@ -134,9 +134,9 @@ export function setupExerciseInputHandlers(container) {
     });
   });
 
-  // Add set button
+  // Add set button - using onclick to prevent duplicate listeners
   container.querySelectorAll('.add-set').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+    btn.onclick = (e) => {
       const index = e.target.dataset.index;
       const setsContainer = container.querySelector(`.sets-container[data-index="${index}"]`);
       const setCount = setsContainer.querySelectorAll('.set-row').length;
@@ -169,7 +169,7 @@ export function setupExerciseInputHandlers(container) {
 
       // Re-setup handlers for new set
       setupRemoveSetHandlers(container);
-    });
+    };
   });
 
   // Remove set buttons
