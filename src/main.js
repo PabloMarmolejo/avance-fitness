@@ -1,6 +1,13 @@
 import './styles/index.css';
 import { initDB } from './db/database.js';
 import { initializeDefaultSettings } from './db/models.js';
+import { router } from './router/router.js';
+import { createBottomNav } from './components/BottomNav.js';
+import { DashboardView } from './views/Dashboard.js';
+import { WorkoutView } from './views/WorkoutView.js';
+import { LogView } from './views/LogView.js';
+import { RoutinesView } from './views/RoutinesView.js';
+import { ProgressView } from './views/ProgressView.js';
 
 // App entry point
 console.log('🏋️ Avance Fitness - Iniciando aplicación...');
@@ -19,23 +26,36 @@ async function initApp() {
 // Initialize app
 initApp();
 
-// Main app container
+// Get app container
 const app = document.querySelector('#app');
 
-// Temporary landing page
-app.innerHTML = `
-  <div class="landing">
-    <div class="landing-content">
-      <h1>💪 Avance Fitness</h1>
-      <p>Tu aplicación para registrar entrenamientos y progreso</p>
-      <div class="status">
-        <span class="status-badge">✅ Proyecto inicializado</span>
-        <span class="status-badge">✅ Base de datos configurada</span>
-        <span class="status-badge">⏳ En desarrollo</span>
-      </div>
-    </div>
-  </div>
-`;
+// Setup routes
+router.on('/', () => {
+  app.innerHTML = DashboardView();
+});
+
+router.on('/workout', () => {
+  app.innerHTML = WorkoutView();
+});
+
+router.on('/log', () => {
+  app.innerHTML = LogView();
+});
+
+router.on('/routines', () => {
+  app.innerHTML = RoutinesView();
+});
+
+router.on('/progress', () => {
+  app.innerHTML = ProgressView();
+});
+
+// Create and append bottom navigation
+const bottomNav = createBottomNav();
+document.body.appendChild(bottomNav);
+
+// Trigger initial route
+router.handleRouteChange();
 
 // Register service worker for PWA
 if ('serviceWorker' in navigator) {
