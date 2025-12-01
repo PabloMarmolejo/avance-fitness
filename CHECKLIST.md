@@ -34,18 +34,18 @@
 ---
 
 ## 🗄️ Fase 4: Capa de Datos (IndexedDB)
-- [ ] Crear database.js con configuración de IndexedDB
-- [ ] Definir stores: workouts, exercises, cardio, routines
-- [ ] Definir stores: bodyMetrics, photos, personalRecords, settings
-- [ ] Implementar funciones de inicialización de DB
-- [ ] Crear models.js con funciones CRUD
-- [ ] Implementar operaciones de workouts (create, read, update, delete)
-- [ ] Implementar operaciones de routines
-- [ ] Implementar operaciones de body metrics
-- [ ] Implementar operaciones de photos (con compresión)
-- [ ] Implementar operaciones de personal records
-- [ ] Crear funciones de helpers para cálculos (IMC, PRs)
-- [ ] Probar persistencia de datos
+- [x] Crear database.js con configuración de IndexedDB
+- [x] Definir stores: workouts, exercises, cardio, routines
+- [x] Definir stores: bodyMetrics, photos, personalRecords, settings
+- [x] Implementar funciones de inicialización de DB
+- [x] Crear models.js con funciones CRUD
+- [x] Implementar operaciones de workouts (create, read, update, delete)
+- [x] Implementar operaciones de routines
+- [x] Implementar operaciones de body metrics
+- [x] Implementar operaciones de photos (con compresión)
+- [x] Implementar operaciones de personal records
+- [x] Crear funciones de helpers para cálculos (IMC, PRs)
+- [x] Probar persistencia de datos
 
 ---
 
