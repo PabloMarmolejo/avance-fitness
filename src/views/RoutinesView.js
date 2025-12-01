@@ -223,7 +223,16 @@ function addRoutineExerciseItem(exercise = null) {
   const exerciseHTML = `
     <div class="routine-exercise-item" data-index="${index}">
       <div class="routine-exercise-header">
-        <div class="exercise-name-wrapper" style="flex: 1;">
+        <div class="routine-exercise-header-top">
+          <select class="form-select exercise-type-select" data-index="${index}">
+            <option value="strength" ${!exercise || exercise.type === 'strength' ? 'selected' : ''}>💪 Fuerza</option>
+            <option value="cardio" ${exercise?.type === 'cardio' ? 'selected' : ''}>🏃 Cardio</option>
+          </select>
+          <button type="button" class="btn btn-sm btn-danger" onclick="removeRoutineExercise(${index})">
+            🗑️
+          </button>
+        </div>
+        <div class="exercise-name-wrapper">
           <input 
             type="text" 
             class="form-input exercise-name-input" 
@@ -232,16 +241,8 @@ function addRoutineExerciseItem(exercise = null) {
             data-index="${index}"
             autocomplete="off"
             required
-            style="width: 100%;"
           />
         </div>
-        <select class="form-select exercise-type-select" data-index="${index}">
-          <option value="strength" ${!exercise || exercise.type === 'strength' ? 'selected' : ''}>💪 Fuerza</option>
-          <option value="cardio" ${exercise?.type === 'cardio' ? 'selected' : ''}>🏃 Cardio</option>
-        </select>
-        <button type="button" class="btn btn-sm btn-danger" onclick="removeRoutineExercise(${index})">
-          🗑️
-        </button>
       </div>
       
       <div class="routine-exercise-details ${!exercise || exercise.type === 'strength' ? '' : 'hidden'}" data-type="strength" data-index="${index}">
@@ -271,6 +272,15 @@ function addRoutineExerciseItem(exercise = null) {
             placeholder="Peso (kg)"
             value="${exercise?.weight || ''}"
             data-field="weight"
+            data-index="${index}"
+            min="0"
+          />
+          <input 
+            type="number" 
+            class="form-input" 
+            placeholder="Duración (opcional)"
+            value="${exercise?.duration || ''}"
+            data-field="duration_strength"
             data-index="${index}"
             min="0"
           />
@@ -305,18 +315,30 @@ function addRoutineExerciseItem(exercise = null) {
 
   exercisesList.insertAdjacentHTML('beforeend', exerciseHTML);
 
-  // Setup autocomplete on the new input
-  const newInput = exercisesList.querySelector(`.routine-exercise-item[data-index="${index}"] .exercise-name-input`);
+  const newItem = exercisesList.querySelector(`.routine-exercise-item[data-index="${index}"]`);
+
+  // Setup type change handler
+  const typeSelect = newItem.querySelector('.exercise-type-select');
+  typeSelect.onchange = (e) => {
+    const type = e.target.value;
+    newItem.querySelectorAll('.routine-exercise-details').forEach(detail => {
+      if (detail.dataset.type === type) {
+        detail.classList.remove('hidden');
+      } else {
+        detail.classList.add('hidden');
+      }
+    });
+  };
+
+  // Setup autocomplete
+  const newInput = newItem.querySelector('.exercise-name-input');
   if (newInput) {
     setupExerciseAutocomplete(newInput, (selectedExercise) => {
-      // Auto-select type based on category
-      const typeSelect = exercisesList.querySelector(`.exercise-type-select[data-index="${index}"]`);
       if (selectedExercise.category === 'cardio') {
         typeSelect.value = 'cardio';
       } else {
         typeSelect.value = 'strength';
       }
-      // Trigger change event to update UI
       typeSelect.dispatchEvent(new Event('change'));
     });
   }
@@ -329,13 +351,14 @@ function setupRoutineFormHandlers() {
   // Add exercise button
   addExerciseBtn.onclick = () => addRoutineExerciseItem();
 
-  // Exercise type toggles
-  document.querySelectorAll('.exercise-type-select').forEach(select => {
-    select.onchange = (e) => {
-      const index = e.target.dataset.index;
-      const type = e.target.value;
-      const item = document.querySelector(`.routine-exercise-item[data-index="${index}"]`);
+  // Initial setup for existing items (if any)
+  document.querySelectorAll('.routine-exercise-item').forEach(item => {
+    const index = item.dataset.index;
+    const typeSelect = item.querySelector('.exercise-type-select');
 
+    // Re-attach listener
+    typeSelect.onchange = (e) => {
+      const type = e.target.value;
       item.querySelectorAll('.routine-exercise-details').forEach(detail => {
         if (detail.dataset.type === type) {
           detail.classList.remove('hidden');
@@ -384,10 +407,14 @@ async function handleRoutineSave() {
         const setsInput = item.querySelector(`[data-field="sets"][data-index="${index}"]`);
         const repsInput = item.querySelector(`[data-field="reps"][data-index="${index}"]`);
         const weightInput = item.querySelector(`[data-field="weight"][data-index="${index}"]`);
+        const durationInput = item.querySelector(`[data-field="duration_strength"][data-index="${index}"]`);
 
         exercise.sets = parseInt(setsInput?.value) || 0;
         exercise.reps = parseInt(repsInput?.value) || 0;
         exercise.weight = parseFloat(weightInput?.value) || 0;
+        if (durationInput?.value) {
+          exercise.duration = parseInt(durationInput.value);
+        }
       } else {
         const durationInput = item.querySelector(`[data-field="duration"][data-index="${index}"]`);
         const speedInput = item.querySelector(`[data-field="speed"][data-index="${index}"]`);

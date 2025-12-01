@@ -3,9 +3,9 @@
  */
 
 import {
-    getAllExerciseLibrary,
-    getExercisesByCategory,
-    searchExercises
+  getAllExerciseLibrary,
+  getExercisesByCategory,
+  searchExercises
 } from '../db/exerciseLibraryModels.js';
 import { CATEGORY_LABELS } from '../db/exerciseLibrary.js';
 import { debounce } from '../utils/helpers.js';
@@ -15,9 +15,9 @@ let currentFilter = 'all';
 let currentSearchQuery = '';
 
 export async function ExerciseLibraryView() {
-    allExercises = await getAllExerciseLibrary();
+  allExercises = await getAllExerciseLibrary();
 
-    return `
+  return `
     <div class="app-container">
       <div class="app-content">
         <div class="page-header">
@@ -70,8 +70,8 @@ export async function ExerciseLibraryView() {
 }
 
 function renderExercises(exercises) {
-    if (exercises.length === 0) {
-        return `
+  if (exercises.length === 0) {
+    return `
       <div class="empty-state">
         <div style="font-size: 4rem; margin-bottom: var(--space-lg);">🔍</div>
         <h3>No se encontraron ejercicios</h3>
@@ -80,9 +80,9 @@ function renderExercises(exercises) {
         </p>
       </div>
     `;
-    }
+  }
 
-    return exercises.map(exercise => `
+  return exercises.map(exercise => `
     <div class="exercise-card card-glass" onclick="showExerciseDetail(${exercise.id})">
       <div class="exercise-card-icon">
         ${CATEGORY_LABELS[exercise.category]?.emoji || '💪'}
@@ -107,92 +107,97 @@ function renderExercises(exercises) {
 }
 
 function getDifficultyLabel(difficulty) {
-    const labels = {
-        beginner: '⭐ Principiante',
-        intermediate: '⭐⭐ Intermedio',
-        advanced: '⭐⭐⭐ Avanzado'
-    };
-    return labels[difficulty] || difficulty;
+  const labels = {
+    beginner: '⭐ Principiante',
+    intermediate: '⭐⭐ Intermedio',
+    advanced: '⭐⭐⭐ Avanzado'
+  };
+  return labels[difficulty] || difficulty;
 }
 
 // Setup view
 export function setupExerciseLibraryView() {
-    setupSearch();
-    setupFilters();
+  setupSearch();
+  setupFilters();
 
-    // Make functions global for onclick
-    window.showExerciseDetail = showExerciseDetail;
-    window.closeExerciseModal = closeExerciseModal;
+  // Make functions global for onclick
+  window.showExerciseDetail = showExerciseDetail;
+  window.closeExerciseModal = closeExerciseModal;
 }
 
 function setupSearch() {
-    const searchInput = document.getElementById('exerciseSearch');
-    if (!searchInput) return;
+  const searchInput = document.getElementById('exerciseSearch');
+  if (!searchInput) return;
 
-    const debouncedSearch = debounce(async (query) => {
-        currentSearchQuery = query.toLowerCase();
-        await updateExerciseGrid();
-    }, 300);
+  const debouncedSearch = debounce(async (query) => {
+    currentSearchQuery = query.toLowerCase();
+    await updateExerciseGrid();
+  }, 300);
 
-    searchInput.addEventListener('input', (e) => {
-        debouncedSearch(e.target.value);
-    });
+  searchInput.addEventListener('input', (e) => {
+    debouncedSearch(e.target.value);
+  });
 }
 
 function setupFilters() {
-    const filterButtons = document.querySelectorAll('.filter-chip');
+  const filterButtons = document.querySelectorAll('.filter-chip');
 
-    filterButtons.forEach(btn => {
-        btn.addEventListener('click', async () => {
-            // Update active state
-            filterButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+  filterButtons.forEach(btn => {
+    btn.addEventListener('click', async () => {
+      // Update active state
+      filterButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
 
-            // Update filter
-            currentFilter = btn.dataset.category;
-            await updateExerciseGrid();
-        });
+      // Update filter
+      currentFilter = btn.dataset.category;
+      await updateExerciseGrid();
     });
+  });
 }
 
 async function updateExerciseGrid() {
-    let exercises = [];
+  let exercises = [];
 
-    // Apply category filter
-    if (currentFilter === 'all') {
-        exercises = await getAllExerciseLibrary();
-    } else {
-        exercises = await getExercisesByCategory(currentFilter);
-    }
+  // Apply category filter
+  if (currentFilter === 'all') {
+    exercises = await getAllExerciseLibrary();
+  } else {
+    exercises = await getExercisesByCategory(currentFilter);
+  }
 
-    // Apply search filter
-    if (currentSearchQuery) {
-        exercises = exercises.filter(ex =>
-            ex.name.toLowerCase().includes(currentSearchQuery) ||
-            ex.description.toLowerCase().includes(currentSearchQuery) ||
-            ex.musclesWorked.primary.some(m => m.toLowerCase().includes(currentSearchQuery)) ||
-            ex.musclesWorked.secondary.some(m => m.toLowerCase().includes(currentSearchQuery))
-        );
-    }
+  // Apply search filter
+  if (currentSearchQuery) {
+    exercises = exercises.filter(ex =>
+      ex.name.toLowerCase().includes(currentSearchQuery) ||
+      ex.description.toLowerCase().includes(currentSearchQuery) ||
+      ex.musclesWorked.primary.some(m => m.toLowerCase().includes(currentSearchQuery)) ||
+      ex.musclesWorked.secondary.some(m => m.toLowerCase().includes(currentSearchQuery))
+    );
+  }
 
-    // Update grid
-    const grid = document.getElementById('exerciseGrid');
-    if (grid) {
-        grid.innerHTML = renderExercises(exercises);
-    }
+  // Update grid
+  const grid = document.getElementById('exerciseGrid');
+  if (grid) {
+    grid.innerHTML = renderExercises(exercises);
+  }
 }
 
 async function showExerciseDetail(id) {
-    const exercise = allExercises.find(ex => ex.id === id);
-    if (!exercise) return;
+  // Fetch directly from DB to ensure we have the correct data
+  const exercise = await import('../db/exerciseLibraryModels.js').then(m => m.getExerciseFromLibrary(id));
 
-    const modal = document.getElementById('exerciseModal');
-    const title = document.getElementById('exerciseModalTitle');
-    const body = document.getElementById('exerciseModalBody');
+  if (!exercise) {
+    console.error('Exercise not found:', id);
+    return;
+  }
 
-    title.textContent = exercise.name;
+  const modal = document.getElementById('exerciseModal');
+  const title = document.getElementById('exerciseModalTitle');
+  const body = document.getElementById('exerciseModalBody');
 
-    body.innerHTML = `
+  title.textContent = exercise.name;
+
+  body.innerHTML = `
     <div class="exercise-detail">
       <div class="detail-icon">
         ${CATEGORY_LABELS[exercise.category]?.emoji || '💪'}
@@ -263,19 +268,19 @@ async function showExerciseDetail(id) {
     </div>
   `;
 
-    modal.classList.remove('hidden');
+  modal.classList.remove('hidden');
 }
 
 function closeExerciseModal() {
-    const modal = document.getElementById('exerciseModal');
-    modal.classList.add('hidden');
+  const modal = document.getElementById('exerciseModal');
+  modal.classList.add('hidden');
 }
 
 window.useExerciseInWorkout = (exerciseName) => {
-    // Store exercise name in localStorage for use in workout form
-    localStorage.setItem('selectedExercise', exerciseName);
-    closeExerciseModal();
-    // Navigate to log workout
-    window.location.hash = '/log';
-    alert(`✅ "${exerciseName}" seleccionado. Ahora completa los detalles del ejercicio.`);
+  // Store exercise name in localStorage for use in workout form
+  localStorage.setItem('selectedExercise', exerciseName);
+  closeExerciseModal();
+  // Navigate to log workout
+  window.location.hash = '/log';
+  alert(`✅ "${exerciseName}" seleccionado. Ahora completa los detalles del ejercicio.`);
 };

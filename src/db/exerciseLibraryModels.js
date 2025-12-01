@@ -14,13 +14,38 @@ const STORE_NAME = 'exerciseLibrary';
 export async function loadInitialExercises() {
     const existing = await getAllExerciseLibrary();
 
-    // Only load if database is empty
-    if (existing.length === 0) {
-        console.log('📚 Cargando ejercicios iniciales...');
+    // Check if we need to update:
+    // 1. Empty database
+    // 2. Different count of default exercises
+    // 3. Old 'arms' category exists
+    // 4. Duplicates exist (simple check: count > expected + custom)
+    const customExercises = existing.filter(ex => ex.isCustom);
+    const defaultExercises = existing.filter(ex => !ex.isCustom);
+    const hasOldCategories = existing.some(ex => ex.category === 'arms');
+    const hasDuplicates = defaultExercises.length > EXERCISES_DATABASE.length;
+
+    if (existing.length === 0 || defaultExercises.length !== EXERCISES_DATABASE.length || hasOldCategories || hasDuplicates) {
+        console.log('📚 Reconstruyendo biblioteca de ejercicios...');
+
+        // 1. Delete ALL existing exercises
+        if (existing.length > 0) {
+            for (const ex of existing) {
+                await deleteData(STORE_NAME, ex.id);
+            }
+        }
+
+        // 2. Restore custom exercises
+        for (const ex of customExercises) {
+            // Remove ID to let DB assign a new one and avoid conflicts
+            const { id, ...exerciseData } = ex;
+            await addData(STORE_NAME, exerciseData);
+        }
+
+        // 3. Load new default exercises
         for (const exercise of EXERCISES_DATABASE) {
             await addData(STORE_NAME, exercise);
         }
-        console.log(`✅ ${EXERCISES_DATABASE.length} ejercicios cargados`);
+        console.log(`✅ Biblioteca actualizada: ${EXERCISES_DATABASE.length} ejercicios base cargados`);
     }
 }
 

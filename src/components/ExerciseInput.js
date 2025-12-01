@@ -14,7 +14,16 @@ export function createExerciseInput(index, exercise = null) {
   return `
     <div class="exercise-input card-glass" data-index="${index}">
       <div class="exercise-header">
-        <div class="exercise-name-wrapper" style="flex: 1;">
+        <div class="exercise-header-top">
+          <select class="form-select exercise-type" data-index="${index}">
+            <option value="strength" ${exerciseType === 'strength' ? 'selected' : ''}>💪 Fuerza</option>
+            <option value="cardio" ${exerciseType === 'cardio' ? 'selected' : ''}>🏃 Cardio</option>
+          </select>
+          <button type="button" class="btn btn-sm btn-danger remove-exercise" data-index="${index}">
+            🗑️
+          </button>
+        </div>
+        <div class="exercise-name-wrapper">
           <input 
             type="text" 
             class="form-input exercise-name" 
@@ -22,16 +31,8 @@ export function createExerciseInput(index, exercise = null) {
             value="${exerciseName}"
             data-index="${index}"
             autocomplete="off"
-            style="width: 100%;"
           />
         </div>
-        <select class="form-select exercise-type" data-index="${index}">
-          <option value="strength" ${exerciseType === 'strength' ? 'selected' : ''}>💪 Fuerza</option>
-          <option value="cardio" ${exerciseType === 'cardio' ? 'selected' : ''}>🏃 Cardio</option>
-        </select>
-        <button type="button" class="btn btn-sm btn-danger remove-exercise" data-index="${index}">
-          🗑️
-        </button>
       </div>
 
       <div class="exercise-details ${exerciseType === 'strength' ? '' : 'hidden'}" data-type="strength" data-index="${index}">

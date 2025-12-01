@@ -9,7 +9,8 @@ export const EXERCISE_CATEGORIES = {
     BACK: 'back',
     LEGS: 'legs',
     SHOULDERS: 'shoulders',
-    ARMS: 'arms',
+    BICEPS: 'biceps',
+    TRICEPS: 'triceps',
     CORE: 'core',
     CARDIO: 'cardio',
     FUNCTIONAL: 'functional'
@@ -20,7 +21,8 @@ export const CATEGORY_LABELS = {
     back: { name: 'Espalda', emoji: '🔙', color: '#3b82f6' },
     legs: { name: 'Piernas', emoji: '🦵', color: '#8b5cf6' },
     shoulders: { name: 'Hombros', emoji: '💪', color: '#f59e0b' },
-    arms: { name: 'Brazos', emoji: '💪', color: '#10b981' },
+    biceps: { name: 'Bíceps', emoji: '💪', color: '#10b981' },
+    triceps: { name: 'Tríceps', emoji: '💪', color: '#059669' },
     core: { name: 'Core', emoji: '⚡', color: '#ec4899' },
     cardio: { name: 'Cardio', emoji: '🏃', color: '#06b6d4' },
     functional: { name: 'Funcional', emoji: '🤸', color: '#a855f7' }
@@ -66,6 +68,34 @@ export const EXERCISES_DATABASE = [
         musclesWorked: { primary: ['Pectoral superior'], secondary: ['Deltoides anterior', 'Tríceps'] }
     },
     {
+        name: 'Press con Mancuernas Plano',
+        category: 'chest',
+        difficulty: 'intermediate',
+        equipment: ['mancuernas', 'banco'],
+        description: 'Permite mayor rango de movimiento y trabajo estabilizador que la barra.',
+        instructions: [
+            'Acuéstate con una mancuerna en cada mano',
+            'Baja las mancuernas hasta el nivel del pecho',
+            'Empuja hacia arriba juntándolas al final'
+        ],
+        tips: ['Controla el peso en todo momento', 'No choques las mancuernas arriba'],
+        musclesWorked: { primary: ['Pectoral mayor'], secondary: ['Tríceps', 'Deltoides anterior'] }
+    },
+    {
+        name: 'Press con Mancuernas Inclinado',
+        category: 'chest',
+        difficulty: 'intermediate',
+        equipment: ['mancuernas', 'banco inclinado'],
+        description: 'Enfatiza el pectoral superior con mayor libertad de movimiento.',
+        instructions: [
+            'Banco a 30-45 grados',
+            'Baja las mancuernas controladamente',
+            'Empuja hacia arriba y ligeramente hacia adentro'
+        ],
+        tips: ['Mantén los codos bajo las muñecas'],
+        musclesWorked: { primary: ['Pectoral superior'], secondary: ['Deltoides anterior', 'Tríceps'] }
+    },
+    {
         name: 'Flexiones (Push-ups)',
         category: 'chest',
         difficulty: 'beginner',
@@ -95,6 +125,21 @@ export const EXERCISES_DATABASE = [
         musclesWorked: { primary: ['Pectoral'], secondary: ['Deltoides anterior'] }
     },
     {
+        name: 'Cruce de Poleas (Crossover)',
+        category: 'chest',
+        difficulty: 'intermediate',
+        equipment: ['poleas'],
+        description: 'Excelente para aislar el pecho y lograr una gran contracción.',
+        instructions: [
+            'Colócate en medio de las poleas altas',
+            'Inclina ligeramente el torso',
+            'Junta las manos frente a tu cintura',
+            'Regresa controladamente'
+        ],
+        tips: ['Mantén los codos ligeramente flexionados', 'Aprieta el pecho al final del movimiento'],
+        musclesWorked: { primary: ['Pectoral mayor', 'Pectoral menor'], secondary: ['Deltoides anterior'] }
+    },
+    {
         name: 'Fondos en Paralelas',
         category: 'chest',
         difficulty: 'intermediate',
@@ -108,6 +153,21 @@ export const EXERCISES_DATABASE = [
         ],
         tips: ['Inclínate más hacia adelante para enfatizar pecho', 'No bajes demasiado si sientes dolor en hombros'],
         musclesWorked: { primary: ['Pectoral inferior', 'Tríceps'], secondary: ['Deltoides'] }
+    },
+    {
+        name: 'Pullover con Mancuerna',
+        category: 'chest',
+        difficulty: 'intermediate',
+        equipment: ['mancuerna', 'banco'],
+        description: 'Trabaja el pecho y la expansión de la caja torácica.',
+        instructions: [
+            'Apoya la parte superior de la espalda en el banco',
+            'Sostén una mancuerna con ambas manos sobre el pecho',
+            'Baja la mancuerna por detrás de la cabeza',
+            'Sube de nuevo a la posición inicial'
+        ],
+        tips: ['Mantén caderas bajas', 'No flexiones demasiado los codos'],
+        musclesWorked: { primary: ['Pectoral', 'Serratos'], secondary: ['Dorsal', 'Tríceps'] }
     },
 
     // ============ ESPALDA (BACK) ============
@@ -125,6 +185,20 @@ export const EXERCISES_DATABASE = [
         ],
         tips: ['Activa los dorsales antes de tirar', 'Evita balancearte', 'Baja completamente entre repeticiones'],
         musclesWorked: { primary: ['Dorsal ancho'], secondary: ['Bíceps', 'Trapecio', 'Romboides'] }
+    },
+    {
+        name: 'Dominadas Supinas (Chin-ups)',
+        category: 'back',
+        difficulty: 'intermediate',
+        equipment: ['barra dominadas'],
+        description: 'Variante con palmas hacia adentro, enfatiza más los bíceps.',
+        instructions: [
+            'Agarra la barra con palmas hacia ti',
+            'Tira hasta pasar la barbilla',
+            'Baja controladamente'
+        ],
+        tips: ['Rango completo de movimiento', 'No uses impulso'],
+        musclesWorked: { primary: ['Dorsal ancho', 'Bíceps'], secondary: ['Antebrazos'] }
     },
     {
         name: 'Remo con Barra',
@@ -186,6 +260,35 @@ export const EXERCISES_DATABASE = [
         tips: ['Mantén la espalda paralela al suelo', 'No rotes el torso', 'Lleva el codo hacia atrás'],
         musclesWorked: { primary: ['Dorsal'], secondary: ['Bíceps', 'Trapecio'] }
     },
+    {
+        name: 'Remo Gironda (Polea Baja)',
+        category: 'back',
+        difficulty: 'beginner',
+        equipment: ['polea baja'],
+        description: 'Remo sentado para grosor de espalda media.',
+        instructions: [
+            'Siéntate con pies en los apoyos',
+            'Mantén espalda recta',
+            'Tira del agarre hacia el abdomen',
+            'Extiende brazos sin curvar la espalda'
+        ],
+        tips: ['Saca el pecho al tirar', 'No te balancees excesivamente'],
+        musclesWorked: { primary: ['Dorsal', 'Romboides'], secondary: ['Bíceps', 'Erectores espinales'] }
+    },
+    {
+        name: 'Pull-over en Polea Alta',
+        category: 'back',
+        difficulty: 'intermediate',
+        equipment: ['polea alta'],
+        description: 'Aísla los dorsales con un movimiento de arco.',
+        instructions: [
+            'De pie frente a la polea, agarra la barra con brazos rectos',
+            'Baja la barra hasta los muslos manteniendo brazos rectos',
+            'Sube controladamente hasta la altura de los ojos'
+        ],
+        tips: ['Mantén codos ligeramente flexionados pero fijos', 'Siente el estiramiento arriba'],
+        musclesWorked: { primary: ['Dorsal ancho'], secondary: ['Tríceps', 'Pectoral'] }
+    },
 
     // ============ PIERNAS (LEGS) ============
     {
@@ -204,6 +307,21 @@ export const EXERCISES_DATABASE = [
         musclesWorked: { primary: ['Cuádriceps', 'Glúteos'], secondary: ['Isquiotibiales', 'Core'] }
     },
     {
+        name: 'Sentadilla Frontal',
+        category: 'legs',
+        difficulty: 'advanced',
+        equipment: ['barra', 'rack'],
+        description: 'Variante con la barra al frente, enfatiza más los cuádriceps y el core.',
+        instructions: [
+            'Barra apoyada en los deltoides anteriores',
+            'Codos altos',
+            'Baja manteniendo el torso muy vertical',
+            'Sube explosivamente'
+        ],
+        tips: ['Mantén los codos arriba', 'No dejes caer el pecho'],
+        musclesWorked: { primary: ['Cuádriceps', 'Core'], secondary: ['Glúteos'] }
+    },
+    {
         name: 'Prensa de Piernas',
         category: 'legs',
         difficulty: 'beginner',
@@ -219,7 +337,7 @@ export const EXERCISES_DATABASE = [
         musclesWorked: { primary: ['Cuádriceps', 'Glúteos'], secondary: ['Isquiotibiales'] }
     },
     {
-        name: 'Zancadas',
+        name: 'Zancadas (Lunges)',
         category: 'legs',
         difficulty: 'beginner',
         equipment: ['mancuernas'],
@@ -232,6 +350,21 @@ export const EXERCISES_DATABASE = [
         ],
         tips: ['Mantén el torso erguido', 'Rodilla delantera no debe pasar la punta del pie', 'Activa el core'],
         musclesWorked: { primary: ['Cuádriceps', 'Glúteos'], secondary: ['Isquiotibiales', 'Core'] }
+    },
+    {
+        name: 'Sentadilla Búlgara',
+        category: 'legs',
+        difficulty: 'intermediate',
+        equipment: ['mancuernas', 'banco'],
+        description: 'Unilateral potente para glúteos y cuádriceps.',
+        instructions: [
+            'Apoya un pie en un banco detrás de ti',
+            'Baja flexionando la pierna delantera',
+            'Mantén el torso inclinado ligeramente hacia adelante',
+            'Empuja para subir'
+        ],
+        tips: ['La rodilla delantera no debe colapsar hacia adentro', 'Baja profundo'],
+        musclesWorked: { primary: ['Glúteos', 'Cuádriceps'], secondary: ['Isquiotibiales'] }
     },
     {
         name: 'Peso Muerto Rumano',
@@ -249,7 +382,7 @@ export const EXERCISES_DATABASE = [
         musclesWorked: { primary: ['Isquiotibiales', 'Glúteos'], secondary: ['Espalda baja'] }
     },
     {
-        name: 'Curl Femoral',
+        name: 'Curl Femoral Tumbado',
         category: 'legs',
         difficulty: 'beginner',
         equipment: ['máquina curl femoral'],
@@ -262,6 +395,49 @@ export const EXERCISES_DATABASE = [
         ],
         tips: ['No despegues las caderas', 'Movimiento controlado', 'Aprieta al llegar arriba'],
         musclesWorked: { primary: ['Isquiotibiales'], secondary: [] }
+    },
+    {
+        name: 'Extensión de Cuádriceps',
+        category: 'legs',
+        difficulty: 'beginner',
+        equipment: ['máquina de extensiones'],
+        description: 'Aislamiento puro para los cuádriceps.',
+        instructions: [
+            'Siéntate y ajusta el rodillo sobre los tobillos',
+            'Extiende las piernas hasta que estén rectas',
+            'Baja controladamente'
+        ],
+        tips: ['No patees el peso', 'Sostén un segundo arriba'],
+        musclesWorked: { primary: ['Cuádriceps'], secondary: [] }
+    },
+    {
+        name: 'Elevación de Talones (Gemelos)',
+        category: 'legs',
+        difficulty: 'beginner',
+        equipment: ['máquina o mancuernas'],
+        description: 'Para desarrollar las pantorrillas.',
+        instructions: [
+            'Coloca la punta de los pies en un escalón',
+            'Baja los talones lo más posible',
+            'Sube lo más alto posible'
+        ],
+        tips: ['Rango completo de movimiento', 'Pausa arriba y abajo'],
+        musclesWorked: { primary: ['Gemelos', 'Sóleo'], secondary: [] }
+    },
+    {
+        name: 'Hip Thrust',
+        category: 'legs',
+        difficulty: 'intermediate',
+        equipment: ['barra', 'banco'],
+        description: 'El mejor ejercicio para aislar y desarrollar los glúteos.',
+        instructions: [
+            'Apoya la espalda alta en un banco',
+            'Barra sobre las caderas',
+            'Levanta las caderas hasta alinear con hombros y rodillas',
+            'Aprieta glúteos arriba'
+        ],
+        tips: ['Mentón pegado al pecho', 'No arquees la espalda baja', 'Empuja con talones'],
+        musclesWorked: { primary: ['Glúteos'], secondary: ['Isquiotibiales'] }
     },
 
     // ============ HOMBROS (SHOULDERS) ============
@@ -279,6 +455,36 @@ export const EXERCISES_DATABASE = [
         ],
         tips: ['Activa el core', 'No arquees la espalda baja', 'Lleva la barra en línea recta'],
         musclesWorked: { primary: ['Deltoides'], secondary: ['Tríceps', 'Trapecio superior'] }
+    },
+    {
+        name: 'Press con Mancuernas Sentado',
+        category: 'shoulders',
+        difficulty: 'beginner',
+        equipment: ['mancuernas', 'banco'],
+        description: 'Alternativa al press militar, más estable para la espalda.',
+        instructions: [
+            'Siéntate en un banco con respaldo',
+            'Mancuernas a la altura de las orejas',
+            'Empuja hacia arriba hasta juntarlas',
+            'Baja controladamente'
+        ],
+        tips: ['No choques las mancuernas', 'Mantén espalda pegada al respaldo'],
+        musclesWorked: { primary: ['Deltoides anterior', 'Deltoides medio'], secondary: ['Tríceps'] }
+    },
+    {
+        name: 'Press Arnold',
+        category: 'shoulders',
+        difficulty: 'intermediate',
+        equipment: ['mancuernas'],
+        description: 'Variación con rotación que trabaja todo el hombro.',
+        instructions: [
+            'Inicia con palmas mirando hacia ti frente al pecho',
+            'Al subir, rota las muñecas hacia afuera',
+            'Termina con palmas al frente arriba',
+            'Invierte el movimiento al bajar'
+        ],
+        tips: ['Movimiento fluido', 'No uses peso excesivo'],
+        musclesWorked: { primary: ['Deltoides anterior', 'Deltoides medio'], secondary: ['Tríceps'] }
     },
     {
         name: 'Elevaciones Laterales',
@@ -325,11 +531,26 @@ export const EXERCISES_DATABASE = [
         tips: ['Lleva los codos hacia atrás y arriba', 'Aprieta los omóplatos', 'Mantén el pecho arriba'],
         musclesWorked: { primary: ['Deltoides posterior'], secondary: ['Romboides', 'Trapecio medio'] }
     },
+    {
+        name: 'Remo al Mentón',
+        category: 'shoulders',
+        difficulty: 'intermediate',
+        equipment: ['barra', 'polea'],
+        description: 'Trabaja trapecios y hombros laterales.',
+        instructions: [
+            'Agarra la barra con manos juntas',
+            'Tira hacia arriba pegado al cuerpo',
+            'Codos siempre más altos que las manos',
+            'Baja controladamente'
+        ],
+        tips: ['No subas más allá del pecho alto si sientes molestia', 'Controla la bajada'],
+        musclesWorked: { primary: ['Trapecio', 'Deltoides lateral'], secondary: ['Bíceps'] }
+    },
 
-    // ============ BRAZOS (ARMS) ============
+    // ============ BÍCEPS (BICEPS) ============
     {
         name: 'Curl con Barra',
-        category: 'arms',
+        category: 'biceps',
         difficulty: 'beginner',
         equipment: ['barra'],
         description: 'Ejercicio clásico para bíceps.',
@@ -344,7 +565,7 @@ export const EXERCISES_DATABASE = [
     },
     {
         name: 'Curl con Mancuernas',
-        category: 'arms',
+        category: 'biceps',
         difficulty: 'beginner',
         equipment: ['mancuernas'],
         description: 'Permite trabajar cada brazo independientemente.',
@@ -358,8 +579,39 @@ export const EXERCISES_DATABASE = [
         musclesWorked: { primary: ['Bíceps'], secondary: ['Antebrazos'] }
     },
     {
+        name: 'Curl Martillo',
+        category: 'biceps',
+        difficulty: 'beginner',
+        equipment: ['mancuernas'],
+        description: 'Enfatiza el braquial y el antebrazo.',
+        instructions: [
+            'Palmas mirándose entre sí (agarre neutro)',
+            'Sube la mancuerna sin girar la muñeca',
+            'Baja controladamente'
+        ],
+        tips: ['Mantén codos fijos', 'No balancees'],
+        musclesWorked: { primary: ['Braquial', 'Bíceps'], secondary: ['Antebrazos'] }
+    },
+    {
+        name: 'Curl Predicador',
+        category: 'biceps',
+        difficulty: 'intermediate',
+        equipment: ['barra Z', 'banco predicador'],
+        description: 'Aísla completamente el bíceps evitando trampas.',
+        instructions: [
+            'Apoya los brazos en el banco',
+            'Extiende casi por completo',
+            'Sube flexionando los codos',
+            'Aprieta arriba'
+        ],
+        tips: ['No levantes los codos del banco', 'Controla la negativa'],
+        musclesWorked: { primary: ['Bíceps'], secondary: [] }
+    },
+
+    // ============ TRÍCEPS (TRICEPS) ============
+    {
         name: 'Extensión de Tríceps con Polea',
-        category: 'arms',
+        category: 'triceps',
         difficulty: 'beginner',
         equipment: ['polea'],
         description: 'Ejercicio de aislamiento para tríceps.',
@@ -374,7 +626,7 @@ export const EXERCISES_DATABASE = [
     },
     {
         name: 'Press Francés',
-        category: 'arms',
+        category: 'triceps',
         difficulty: 'intermediate',
         equipment: ['barra', 'banco'],
         description: 'Ejercicio compuesto para tríceps.',
@@ -386,6 +638,21 @@ export const EXERCISES_DATABASE = [
         ],
         tips: ['Codos apuntando hacia adelante', 'No abras los codos', 'Usa peso moderado'],
         musclesWorked: { primary: ['Tríceps'], secondary: [] }
+    },
+    {
+        name: 'Fondos entre Bancos',
+        category: 'triceps',
+        difficulty: 'beginner',
+        equipment: ['bancos'],
+        description: 'Ejercicio de peso corporal para tríceps.',
+        instructions: [
+            'Apoya las manos en un banco detrás de ti',
+            'Pies en otro banco o en el suelo',
+            'Baja flexionando codos',
+            'Empuja hacia arriba'
+        ],
+        tips: ['Mantén la espalda cerca del banco', 'No bajes excesivamente'],
+        musclesWorked: { primary: ['Tríceps'], secondary: ['Deltoides anterior'] }
     },
 
     // ============ CORE ============
@@ -449,6 +716,20 @@ export const EXERCISES_DATABASE = [
         tips: ['Mantén espalda baja pegada al suelo', 'Piernas rectas o ligeramente flexionadas', 'Movimiento controlado'],
         musclesWorked: { primary: ['Abdomen inferior'], secondary: ['Hip flexors'] }
     },
+    {
+        name: 'Rueda Abdominal',
+        category: 'core',
+        difficulty: 'advanced',
+        equipment: ['rueda abdominal'],
+        description: 'Uno de los ejercicios más efectivos y duros para el core.',
+        instructions: [
+            'De rodillas, sostén la rueda',
+            'Rueda hacia adelante extendiendo el cuerpo',
+            'Contrae el abdomen para volver'
+        ],
+        tips: ['Mantén la espalda redondeada (gato)', 'No dejes caer la cadera'],
+        musclesWorked: { primary: ['Core completo'], secondary: ['Dorsal', 'Hombros'] }
+    },
 
     // ============ CARDIO ============
     {
@@ -495,6 +776,20 @@ export const EXERCISES_DATABASE = [
         ],
         tips: ['Usa las piernas primero', '60% piernas, 20% core, 20% brazos', 'Mantén espalda recta'],
         musclesWorked: { primary: ['Cardiovascular'], secondary: ['Espalda', 'Piernas', 'Brazos'] }
+    },
+    {
+        name: 'Elíptica',
+        category: 'cardio',
+        difficulty: 'beginner',
+        equipment: ['elíptica'],
+        description: 'Cardio de bajo impacto que involucra brazos y piernas.',
+        instructions: [
+            'Sube y agarra los manubrios móviles',
+            'Mueve piernas y brazos coordinadamente',
+            'Mantén postura erguida'
+        ],
+        tips: ['Usa la resistencia para mayor dificultad', 'No te apoyes excesivamente en los brazos fijos'],
+        musclesWorked: { primary: ['Cardiovascular'], secondary: ['Piernas', 'Brazos'] }
     },
 
     // ============ FUNCIONAL ============
@@ -545,5 +840,20 @@ export const EXERCISES_DATABASE = [
         ],
         tips: ['Movimiento de caderas, no de brazos', 'Mantén espalda recta', 'Aprieta glúteos arriba'],
         musclesWorked: { primary: ['Glúteos', 'Isquiotibiales'], secondary: ['Core', 'Hombros'] }
+    },
+    {
+        name: 'Wall Balls',
+        category: 'functional',
+        difficulty: 'intermediate',
+        equipment: ['balón medicinal'],
+        description: 'Sentadilla con lanzamiento de balón.',
+        instructions: [
+            'Sostén el balón frente al pecho',
+            'Haz una sentadilla profunda',
+            'Al subir, lanza el balón hacia arriba contra la pared',
+            'Recibe y repite'
+        ],
+        tips: ['Usa el impulso de las piernas para lanzar', 'Mantén el pecho arriba'],
+        musclesWorked: { primary: ['Piernas', 'Hombros'], secondary: ['Core', 'Cardiovascular'] }
     }
 ];
