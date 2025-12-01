@@ -47,8 +47,12 @@ export async function getWorkout(id) {
  */
 export async function getAllWorkouts() {
     const workouts = await getAllData('workouts');
-    // Ordenar por fecha descendente (más reciente primero)
-    return workouts.sort((a, b) => new Date(b.date) - new Date(a.date));
+    // Ordenar por fecha y hora descendente (más reciente primero)
+    return workouts.sort((a, b) => {
+        const dateA = new Date(`${a.date}T${a.time || '00:00'}`);
+        const dateB = new Date(`${b.date}T${b.time || '00:00'}`);
+        return dateB - dateA;
+    });
 }
 
 /**

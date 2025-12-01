@@ -5,7 +5,7 @@ import { loadInitialExercises } from './db/exerciseLibraryModels.js';
 import { router } from './router/router.js';
 import { createBottomNav } from './components/BottomNav.js';
 import { DashboardView } from './views/Dashboard.js';
-import { WorkoutView } from './views/WorkoutView.js';
+import { WorkoutView, setupWorkoutView } from './views/WorkoutView.js';
 import { LogView, setupLogView } from './views/LogView.js';
 import { RoutinesView, setupRoutinesView } from './views/RoutinesView.js';
 import { ProgressView } from './views/ProgressView.js';
@@ -33,8 +33,13 @@ router.on('/', async () => {
   app.innerHTML = await DashboardView();
 });
 
-router.on('/workout', () => {
-  app.innerHTML = WorkoutView();
+router.on('/workout', async () => {
+  app.innerHTML = await WorkoutView();
+  setTimeout(() => {
+    if (typeof setupWorkoutView === 'function') {
+      setupWorkoutView();
+    }
+  }, 0);
 });
 
 router.on('/log', () => {

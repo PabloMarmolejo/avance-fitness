@@ -7,11 +7,9 @@ import { formatDate } from '../utils/helpers.js';
 import { navigate } from '../router/router.js';
 
 export async function WorkoutView() {
-  console.log('🔍 WorkoutView: Fetching workouts...');
   const workouts = await getAllWorkouts();
-  console.log('🔍 WorkoutView: Got workouts:', workouts.length);
 
-  const html = `
+  return `
     <div class="app-container">
       <div class="app-content">
         <div class="page-header">
@@ -23,9 +21,6 @@ export async function WorkoutView() {
       </div>
     </div>
   `;
-
-  console.log('🔍 WorkoutView: Rendering complete');
-  return html;
 }
 
 function renderEmptyState() {
@@ -44,43 +39,6 @@ function renderEmptyState() {
 }
 
 function renderWorkoutsList(workouts) {
-  console.log('🔍 renderWorkoutsList: Rendering', workouts.length, 'workouts');
-
-  const workoutItems = workouts.map(workout => {
-    const formattedDate = formatDate(workout.date);
-    console.log('🔍 Workout:', workout.id, 'Date:', workout.date, 'Formatted:', formattedDate);
-
-    return `
-      <div class="workout-item card-glass">
-        <div class="workout-header">
-          <div class="workout-type-badge">${workout.type}</div>
-          <span class="workout-date">${formattedDate}</span>
-        </div>
-        <div class="workout-details">
-          <span class="workout-time">⏱ ${workout.duration} min</span>
-          ${workout.time ? `<span class="workout-time">🕐 ${workout.time}</span>` : ''}
-          ${workout.notes ? `<span class="workout-notes">📝 ${workout.notes.substring(0, 100)}${workout.notes.length > 100 ? '...' : ''}</span>` : ''}
-        </div>
-        <div class="workout-actions">
-          <button 
-            class="btn btn-sm btn-secondary" 
-            onclick="viewWorkoutDetails(${workout.id})"
-            title="Ver detalles"
-          >
-            👁️ Ver
-          </button>
-          <button 
-            class="btn btn-sm btn-danger" 
-            onclick="confirmDeleteWorkout(${workout.id}, '${workout.type.replace(/'/g, "\\'")}')"
-            title="Eliminar"
-          >
-            🗑️
-          </button>
-        </div>
-      </div>
-    `;
-  }).join('');
-
   return `
     <div class="section-header" style="margin-bottom: var(--space-lg);">
       <h3>Historial Completo (${workouts.length})</h3>
@@ -90,20 +48,46 @@ function renderWorkoutsList(workouts) {
     </div>
 
     <div class="workout-list">
-      ${workoutItems}
+      ${workouts.map(workout => `
+        <div class="workout-item card-glass">
+          <div class="workout-header">
+            <div class="workout-type-badge">${workout.type}</div>
+            <span class="workout-date">${formatDate(workout.date)}</span>
+          </div>
+          <div class="workout-details">
+            <span class="workout-time">⏱ ${workout.duration} min</span>
+            ${workout.time ? `<span class="workout-time">🕐 ${workout.time}</span>` : ''}
+            ${workout.notes ? `<span class="workout-notes">📝 ${workout.notes.substring(0, 100)}${workout.notes.length > 100 ? '...' : ''}</span>` : ''}
+          </div>
+          <div class="workout-actions">
+            <button 
+              class="btn btn-sm btn-secondary" 
+              onclick="viewWorkoutDetails(${workout.id})"
+              title="Ver detalles"
+            >
+              👁️ Ver
+            </button>
+            <button 
+              class="btn btn-sm btn-danger" 
+              onclick="confirmDeleteWorkout(${workout.id}, '${workout.type.replace(/'/g, "\\'")}')"
+              title="Eliminar"
+            >
+              🗑️
+            </button>
+          </div>
+        </div>
+      `).join('')}
     </div>
   `;
 }
 
 export function setupWorkoutView() {
-  console.log('🔍 setupWorkoutView: Setting up handlers');
   // Make functions globally available
   window.viewWorkoutDetails = viewWorkoutDetails;
   window.confirmDeleteWorkout = confirmDeleteWorkout;
 }
 
 async function viewWorkoutDetails(id) {
-  console.log('🔍 viewWorkoutDetails:', id);
   const workout = await import('../db/models.js').then(m => m.getWorkout(id));
   const exercises = await getExercisesByWorkout(id);
 
