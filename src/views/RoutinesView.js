@@ -4,6 +4,7 @@
 
 import { getAllRoutines, deleteRoutine, startWorkoutFromRoutine } from '../db/models.js';
 import { navigate } from '../router/router.js';
+import { setupExerciseAutocomplete } from '../utils/exerciseAutocomplete.js';
 
 export async function RoutinesView() {
   const routines = await getAllRoutines();
@@ -222,14 +223,18 @@ function addRoutineExerciseItem(exercise = null) {
   const exerciseHTML = `
     <div class="routine-exercise-item" data-index="${index}">
       <div class="routine-exercise-header">
-        <input 
-          type="text" 
-          class="form-input exercise-name-input" 
-          placeholder="Nombre del ejercicio"
-          value="${exercise?.name || ''}"
-          data-index="${index}"
-          required
-        />
+        <div class="exercise-name-wrapper" style="flex: 1;">
+          <input 
+            type="text" 
+            class="form-input exercise-name-input" 
+            placeholder="Nombre del ejercicio"
+            value="${exercise?.name || ''}"
+            data-index="${index}"
+            autocomplete="off"
+            required
+            style="width: 100%;"
+          />
+        </div>
         <select class="form-select exercise-type-select" data-index="${index}">
           <option value="strength" ${!exercise || exercise.type === 'strength' ? 'selected' : ''}>💪 Fuerza</option>
           <option value="cardio" ${exercise?.type === 'cardio' ? 'selected' : ''}>🏃 Cardio</option>
@@ -299,6 +304,22 @@ function addRoutineExerciseItem(exercise = null) {
   `;
 
   exercisesList.insertAdjacentHTML('beforeend', exerciseHTML);
+
+  // Setup autocomplete on the new input
+  const newInput = exercisesList.querySelector(`.routine-exercise-item[data-index="${index}"] .exercise-name-input`);
+  if (newInput) {
+    setupExerciseAutocomplete(newInput, (selectedExercise) => {
+      // Auto-select type based on category
+      const typeSelect = exercisesList.querySelector(`.exercise-type-select[data-index="${index}"]`);
+      if (selectedExercise.category === 'cardio') {
+        typeSelect.value = 'cardio';
+      } else {
+        typeSelect.value = 'strength';
+      }
+      // Trigger change event to update UI
+      typeSelect.dispatchEvent(new Event('change'));
+    });
+  }
 }
 
 function setupRoutineFormHandlers() {
