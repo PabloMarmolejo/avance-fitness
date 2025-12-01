@@ -1433,3 +1433,64 @@ a:hover {
   margin-top: var(--space-xs);
   opacity: 0.7;
 }
+
+/* ============================================
+   Workout Details Modal Styles
+   ============================================ */
+.workout-detail-info {
+  background: rgba(255, 255, 255, 0.03);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+}
+
+.workout-detail-info p {
+  margin: var(--space-sm) 0;
+  color: var(--color-text);
+}
+
+.workout-detail-info strong {
+  color: var(--color-primary-light);
+  margin-right: var(--space-xs);
+}
+
+.exercises-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.exercise-detail-card {
+  padding: var(--space-md);
+}
+
+.exercise-detail-card h4 {
+  margin: 0 0 var(--space-md) 0;
+  color: var(--color-primary-light);
+}
+
+.sets-summary, .cardio-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.set-detail {
+  padding: var(--space-xs) var(--space-sm);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+}
+
+.cardio-summary p {
+  margin: var(--space-xs) 0;
+}
+
+.workout-actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
