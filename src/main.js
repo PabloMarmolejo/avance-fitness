@@ -30,8 +30,8 @@ initApp();
 const app = document.querySelector('#app');
 
 // Setup routes
-router.on('/', () => {
-  app.innerHTML = DashboardView();
+router.on('/', async () => {
+  app.innerHTML = await DashboardView();
 });
 
 router.on('/workout', () => {

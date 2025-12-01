@@ -50,13 +50,13 @@
 ---
 
 ## 🧭 Fase 5: Navegación y Routing
-- [ ] Crear router.js con sistema de navegación hash-based
-- [ ] Implementar funciones de navegación programática
-- [ ] Crear componente BottomNav.js
-- [ ] Diseñar navegación inferior con iconos
-- [ ] Implementar highlights de ruta activa
-- [ ] Conectar rutas con vistas
-- [ ] Probar navegación entre páginas
+- [x] Crear router.js con sistema de navegación hash-based
+- [x] Implementar funciones de navegación programática
+- [x] Crear componente BottomNav.js
+- [x] Diseñar navegación inferior con iconos
+- [x] Implementar highlights de ruta activa
+- [x] Conectar rutas con vistas
+- [x] Probar navegación entre páginas
 
 ---
 
