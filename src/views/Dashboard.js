@@ -67,28 +67,7 @@ export function DashboardView() {
           </div>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="quick-actions animate-slideInUp">
-          <h3 style="margin-bottom: var(--space-md);">Acciones Rápidas</h3>
-          <div class="grid grid-cols-2 gap-md">
-            <button class="action-card card-glass" onclick="window.location.hash = '/log'">
-              <div class="action-icon">➕</div>
-              <span class="action-label">Registrar</span>
-            </button>
-            <button class="action-card card-glass" onclick="window.location.hash = '/routines'">
-              <div class="action-icon">📋</div>
-              <span class="action-label">Rutinas</span>
-            </button>
-            <button class="action-card card-glass" onclick="window.location.hash = '/progress'">
-              <div class="action-icon">📊</div>
-              <span class="action-label">Progreso</span>
-            </button>
-            <button class="action-card card-glass" onclick="window.location.hash = '/exercises'">
-              <div class="action-icon">📚</div>
-              <span class="action-label">Ejercicios</span>
-            </button>
-          </div>
-        </div>
+
 
         <style>
           .btn-profile {
@@ -115,34 +94,7 @@ export function DashboardView() {
             box-shadow: var(--shadow-md);
             border: 2px solid rgba(255,255,255,0.1);
           }
-          .action-card {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: var(--space-lg);
-            border: none;
-            cursor: pointer;
-            transition: all var(--transition-base);
-            gap: var(--space-sm);
-            color: var(--color-text);
-            text-align: center;
-          }
-          .action-card:hover {
-            background: var(--color-surface-hover);
-            transform: translateY(-2px);
-          }
-          .action-card:active {
-            transform: scale(0.98);
-          }
-          .action-icon {
-            font-size: 2rem;
-            margin-bottom: var(--space-xs);
-          }
-          .action-label {
-            font-weight: 600;
-            font-size: 0.9rem;
-          }
+
         </style>
 
         <div id="recent-workouts-container">
@@ -185,6 +137,9 @@ export function setupDashboardView() {
     window.currentViewUnsubscribe();
   }
   window.currentViewUnsubscribe = unsubscribe;
+
+  // Make modal function globally available
+  window.openWorkoutDetailsModal = openWorkoutDetailsModal;
 }
 
 function updateDashboard(state) {
@@ -231,6 +186,8 @@ function getGreeting() {
   return '🌙 Buenas noches';
 }
 
+import { openWorkoutDetailsModal } from '../components/WorkoutDetailsModal.js';
+
 function renderRecentWorkouts(workouts) {
   if (workouts.length === 0) {
     return `
@@ -256,7 +213,7 @@ function renderRecentWorkouts(workouts) {
       </div>
       <div class="workout-list">
         ${workouts.map(workout => `
-          <div class="workout-item card-glass">
+          <div class="workout-item card-glass" onclick="openWorkoutDetailsModal('${workout.id}')" style="cursor: pointer;">
             <div class="workout-header">
               <div class="workout-type-badge">${workout.type}</div>
               <span class="workout-date">${formatDate(workout.date)}</span>

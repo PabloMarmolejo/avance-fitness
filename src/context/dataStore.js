@@ -48,13 +48,19 @@ class DataStore {
         // 1. Workouts Listener
         const workoutsQuery = query(
             collection(db, 'users', userId, 'workouts'),
-            orderBy('date', 'desc'),
-            orderBy('time', 'desc')
+            orderBy('date', 'desc')
+            // orderBy('time', 'desc') // Removed to avoid composite index requirement for now
         );
 
         this.listeners.push(onSnapshot(workoutsQuery, (snapshot) => {
+            console.log('📸 Workouts snapshot received!', snapshot.size, 'docs');
+            const source = snapshot.metadata.hasPendingWrites ? "Local" : "Server";
+            console.log("Source: " + source);
             this.state.workouts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            console.log('Updated workouts state:', this.state.workouts.length);
             this.notifySubscribers('workouts');
+        }, (error) => {
+            console.error("❌ Error in workouts listener:", error);
         }));
 
         // 2. Routines Listener

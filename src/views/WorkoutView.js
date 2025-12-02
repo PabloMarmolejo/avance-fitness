@@ -2,13 +2,12 @@
  * Workout View - Workout History
  */
 
-import { getAllWorkouts, getExercisesByWorkout, deleteWorkout } from '../db/models.js';
+import { getExercisesByWorkout, deleteWorkout } from '../db/models.js';
 import { formatDate } from '../utils/helpers.js';
 import { navigate } from '../router/router.js';
+import { dataStore } from '../context/dataStore.js';
 
-export async function WorkoutView() {
-  const workouts = await getAllWorkouts();
-
+export function WorkoutView() {
   return `
     <div class="app-container">
       <div class="app-content">
@@ -17,10 +16,51 @@ export async function WorkoutView() {
           <p class="page-subtitle">Historial de sesiones</p>
         </div>
 
-        ${workouts.length === 0 ? renderEmptyState() : renderWorkoutsList(workouts)}
+        <div id="workouts-container">
+          <!-- Workouts will be rendered here -->
+          <div class="loading-skeleton" style="height: 200px;"></div>
+          <div class="loading-skeleton" style="height: 200px;"></div>
+        </div>
       </div>
     </div>
   `;
+}
+
+import { openWorkoutDetailsModal } from '../components/WorkoutDetailsModal.js';
+
+export function setupWorkoutView() {
+  // Initial render
+  updateWorkoutsList(dataStore.state.workouts);
+
+  // Subscribe to changes
+  const unsubscribe = dataStore.subscribe((state) => {
+    updateWorkoutsList(state.workouts);
+  });
+
+  // Handle cleanup
+  if (window.currentViewUnsubscribe) {
+    window.currentViewUnsubscribe();
+  }
+  window.currentViewUnsubscribe = unsubscribe;
+
+  // Make functions globally available
+  window.viewWorkoutDetails = openWorkoutDetailsModal;
+  window.confirmDeleteWorkout = confirmDeleteWorkout;
+}
+
+function updateWorkoutsList(workouts) {
+  const container = document.getElementById('workouts-container');
+  if (!container) return;
+
+  if (!workouts || workouts.length === 0) {
+    container.innerHTML = renderEmptyState();
+    return;
+  }
+
+  // Sort workouts by date (newest first)
+  const sortedWorkouts = [...workouts].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  container.innerHTML = renderWorkoutsList(sortedWorkouts);
 }
 
 function renderEmptyState() {
@@ -49,7 +89,7 @@ function renderWorkoutsList(workouts) {
 
     <div class="workout-list">
       ${workouts.map(workout => `
-        <div class="workout-item card-glass">
+        <div class="workout-item card-glass" onclick="viewWorkoutDetails('${workout.id}')" style="cursor: pointer;">
           <div class="workout-header">
             <div class="workout-type-badge">${workout.type}</div>
             <span class="workout-date">${formatDate(workout.date)}</span>
@@ -61,15 +101,8 @@ function renderWorkoutsList(workouts) {
           </div>
           <div class="workout-actions">
             <button 
-              class="btn btn-sm btn-secondary" 
-              onclick="viewWorkoutDetails(${workout.id})"
-              title="Ver detalles"
-            >
-              👁️ Ver
-            </button>
-            <button 
               class="btn btn-sm btn-danger" 
-              onclick="confirmDeleteWorkout(${workout.id}, '${workout.type.replace(/'/g, "\\'")}')"
+              onclick="event.stopPropagation(); confirmDeleteWorkout('${workout.id}', '${workout.type.replace(/'/g, "\\'")}')"
               title="Eliminar"
             >
               🗑️
@@ -81,75 +114,33 @@ function renderWorkoutsList(workouts) {
   `;
 }
 
-export function setupWorkoutView() {
-  // Make functions globally available
-  window.viewWorkoutDetails = viewWorkoutDetails;
-  window.confirmDeleteWorkout = confirmDeleteWorkout;
-}
 
-async function viewWorkoutDetails(id) {
-  const workout = await import('../db/models.js').then(m => m.getWorkout(id));
-  const exercises = await getExercisesByWorkout(id);
 
-  const detailsHTML = `
-    <div class="modal" style="display: block;">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Detalles del Entrenamiento</h2>
-          <button class="modal-close" onclick="closeWorkoutDetails()">✕</button>
-        </div>
-        <div class="modal-body">
-          <div class="workout-detail-info">
-            <p><strong>Tipo:</strong> ${workout.type}</p>
-            <p><strong>Fecha:</strong> ${formatDate(workout.date)}</p>
-            <p><strong>Hora:</strong> ${workout.time || 'No especificada'}</p>
-            <p><strong>Duración:</strong> ${workout.duration} minutos</p>
-            ${workout.notes ? `<p><strong>Notas:</strong> ${workout.notes}</p>` : ''}
-          </div>
-
-          ${exercises.length > 0 ? `
-            <h3 style="margin-top: var(--space-lg);">Ejercicios (${exercises.length})</h3>
-            <div class="exercises-list">
-              ${exercises.map(ex => `
-                <div class="exercise-detail-card card-glass">
-                  <h4>${ex.name}</h4>
-                  ${ex.type === 'strength' ? `
-                    <div class="sets-summary">
-                      ${ex.sets.map((set, idx) => `
-                        <div class="set-detail">
-                          Set ${idx + 1}: ${set.reps} reps × ${set.weight} kg
-                        </div>
-                      `).join('')}
-                    </div>
-                  ` : `
-                    <div class="cardio-summary">
-                      <p>⏱ ${ex.duration} min</p>
-                      ${ex.speed ? `<p>🏃 ${ex.speed} km/h</p>` : ''}
-                      ${ex.distance ? `<p>📏 ${ex.distance} km</p>` : ''}
-                    </div>
-                  `}
-                </div>
-              `).join('')}
-            </div>
-          ` : '<p>No hay ejercicios registrados</p>'}
-        </div>
-        <div class="modal-actions">
-          <button class="btn btn-secondary" onclick="closeWorkoutDetails()">Cerrar</button>
-        </div>
-      </div>
-    </div>
-  `;
-
-  document.body.insertAdjacentHTML('beforeend', detailsHTML);
-
-  window.closeWorkoutDetails = () => {
-    document.querySelector('.modal').remove();
-  };
-}
+import { showConfirmationModal } from '../components/ConfirmationModal.js';
+import { showToast } from '../utils/helpers.js';
 
 async function confirmDeleteWorkout(id, type) {
-  if (confirm(`¿Estás seguro de que quieres eliminar el entrenamiento "${type}"?`)) {
-    await deleteWorkout(id);
-    navigate('/workout');
-  }
+  console.log('🗑️ Requesting delete confirmation for:', id, type);
+
+  showConfirmationModal({
+    title: 'Eliminar Entrenamiento',
+    message: `¿Estás seguro de que quieres eliminar el entrenamiento de "${type}"? Esta acción no se puede deshacer.`,
+    confirmText: 'Sí, Eliminar',
+    cancelText: 'Cancelar',
+    type: 'danger',
+    onConfirm: async () => {
+      try {
+        console.log('👉 Proceeding with deletion...');
+        await deleteWorkout(id);
+        console.log('✅ Workout deleted successfully');
+        showToast('Entrenamiento eliminado correctamente', 'success');
+      } catch (error) {
+        console.error('❌ Error deleting workout:', error);
+        showToast('Error al eliminar: ' + error.message, 'error');
+      }
+    },
+    onCancel: () => {
+      console.log('❌ Deletion cancelled by user');
+    }
+  });
 }

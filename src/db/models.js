@@ -63,7 +63,7 @@ export async function getWorkout(id) {
 
 export async function getAllWorkouts() {
     try {
-        const q = query(getUserCollection('workouts'), orderBy('date', 'desc'), orderBy('time', 'desc'));
+        const q = query(getUserCollection('workouts'), orderBy('date', 'desc'));
         const querySnapshot = await getDocs(q);
         return querySnapshot.docs.map(docToObj);
     } catch (error) {
@@ -98,22 +98,38 @@ export async function updateWorkout(workout) {
 }
 
 export async function deleteWorkout(id) {
+    console.log('🔥 deleteWorkout called for ID:', id);
     const user = auth.currentUser;
+    if (!user) {
+        console.error('❌ No authenticated user found in deleteWorkout');
+        throw new Error('User not authenticated');
+    }
 
-    // Delete associated exercises first
-    const exercises = await getExercisesByWorkout(id);
-    const batch = writeBatch(db);
+    try {
+        // Delete associated exercises first
+        console.log('🔍 Fetching associated exercises...');
+        const exercises = await getExercisesByWorkout(id);
+        console.log(`Found ${exercises.length} exercises to delete`);
 
-    exercises.forEach(ex => {
-        const exRef = doc(db, 'users', user.uid, 'exercises', ex.id);
-        batch.delete(exRef);
-    });
+        const batch = writeBatch(db);
 
-    // Delete workout
-    const workoutRef = doc(db, 'users', user.uid, 'workouts', id);
-    batch.delete(workoutRef);
+        exercises.forEach(ex => {
+            const exRef = doc(db, 'users', user.uid, 'exercises', ex.id);
+            batch.delete(exRef);
+        });
 
-    await batch.commit();
+        // Delete workout
+        console.log('🗑️ Deleting workout doc...');
+        const workoutRef = doc(db, 'users', user.uid, 'workouts', id);
+        batch.delete(workoutRef);
+
+        console.log('💾 Committing batch...');
+        await batch.commit();
+        console.log('✅ deleteWorkout completed successfully');
+    } catch (error) {
+        console.error('❌ Error in deleteWorkout:', error);
+        throw error;
+    }
 }
 
 // ============================================

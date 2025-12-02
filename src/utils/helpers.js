@@ -451,3 +451,41 @@ export function debounce(func, wait) {
         timeout = setTimeout(later, wait);
     };
 }
+
+// ============================================
+// TOAST NOTIFICATIONS
+// ============================================
+
+/**
+ * Show toast notification
+ * @param {string} message - Message to display
+ * @param {string} type - 'success' or 'error'
+ * @param {number} duration - Duration in ms
+ */
+export function showToast(message, type = 'success', duration = 3000) {
+    console.log('🍞 showToast called:', message, type);
+    const icon = type === 'success' ? '✅' : '❌';
+    const toastHTML = `
+        <div class="toast toast-${type}">
+            <span class="toast-icon">${icon}</span>
+            <span class="toast-message">${message}</span>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', toastHTML);
+    const toast = document.body.lastElementChild;
+    console.log('🍞 Toast element created:', toast);
+
+    // Trigger animation
+    requestAnimationFrame(() => {
+        toast.classList.add('show');
+    });
+
+    // Remove after duration
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, duration);
+}
