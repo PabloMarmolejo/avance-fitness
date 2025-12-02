@@ -9,7 +9,8 @@ import {
   getAllProgressPhotos,
   getAllPersonalRecords,
   getAllData,
-  addBodyMetrics
+  addBodyMetrics,
+  addProgressPhoto
 } from '../db/models.js';
 
 import {
@@ -22,7 +23,7 @@ import {
   getWorkoutTrend
 } from '../utils/progressHelpers.js';
 
-import { calculateStreak, formatDate } from '../utils/helpers.js';
+import { calculateStreak, formatDate, compressImage } from '../utils/helpers.js';
 
 let currentTab = 'overview';
 let activeCharts = {};
@@ -104,6 +105,7 @@ async function loadTabContent(tab) {
       contentDiv.innerHTML = await renderOverviewTab();
       contentDiv.classList.add('active');
       await initOverviewCharts();
+      setupOverviewHandlers();
       break;
     case 'metrics':
       contentDiv.innerHTML = await renderBodyMetricsTab();
@@ -118,6 +120,7 @@ async function loadTabContent(tab) {
     case 'photos':
       contentDiv.innerHTML = await renderPhotosTab();
       contentDiv.classList.add('active');
+      setupPhotosHandlers();
       break;
   }
 }
@@ -206,10 +209,10 @@ async function renderOverviewTab() {
     <div class="quick-actions">
       <h3 style="margin-bottom: var(--space-md);">Acciones Rápidas</h3>
       <div class="action-buttons">
-        <button class="btn btn-primary" onclick="document.querySelector('[data-tab=\'metrics\']').click()">
+        <button class="btn btn-primary" id="quickMetricsBtn">
           📏 Registrar Métricas
         </button>
-        <button class="btn btn-secondary" onclick="document.querySelector('[data-tab=\'photos\']').click()">
+        <button class="btn btn-secondary" id="quickPhotoBtn">
           📸 Subir Foto
         </button>
       </div>
@@ -254,6 +257,19 @@ async function initOverviewCharts() {
         }
       }
     });
+  }
+}
+
+function setupOverviewHandlers() {
+  const metricsBtn = document.getElementById('quickMetricsBtn');
+  const photoBtn = document.getElementById('quickPhotoBtn');
+
+  if (metricsBtn) {
+    metricsBtn.addEventListener('click', () => openMetricsModal());
+  }
+
+  if (photoBtn) {
+    photoBtn.addEventListener('click', () => openPhotoModal());
   }
 }
 
@@ -482,7 +498,7 @@ async function handleSaveMetrics(e) {
 
     closeMetricsModal();
     // Reload current tab
-    await loadTabContent('metrics');
+    await loadTabContent(currentTab);
     alert('✅ Métricas guardadas correctamente');
   } catch (error) {
     console.error('Error saving metrics:', error);
@@ -563,8 +579,128 @@ async function renderPhotosTab() {
       ${photos.map(photo => `
         <div class="photo-card card-glass">
           <img src="${photo.imageData}" alt="Foto de progreso ${formatDate(photo.date)}" />
+          <div class="photo-date-overlay">${formatDate(photo.date)}</div>
         </div>
       `).join('')}
     </div>
   `;
+}
+
+function setupPhotosHandlers() {
+  const addBtn = document.getElementById('addPhotoBtn');
+  if (addBtn) {
+    addBtn.addEventListener('click', () => openPhotoModal());
+  }
+}
+
+function openPhotoModal() {
+  const modal = document.getElementById('photoModal');
+  modal.innerHTML = `
+    <div class="modal-backdrop" onclick="closePhotoModal()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Subir Foto de Progreso</h2>
+        <button class="modal-close" onclick="closePhotoModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        ${renderPhotoForm()}
+      </div>
+    </div>
+  `;
+  modal.classList.add('active');
+
+  // Setup form submission
+  const form = document.getElementById('photoForm');
+  form.addEventListener('submit', handleSavePhoto);
+
+  // Setup file input preview
+  const fileInput = document.getElementById('photoInput');
+  const preview = document.getElementById('photoPreview');
+
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+}
+
+window.closePhotoModal = function () {
+  const modal = document.getElementById('photoModal');
+  modal.classList.remove('active');
+};
+
+function renderPhotoForm() {
+  const today = new Date().toISOString().split('T')[0];
+
+  return `
+    <form id="photoForm">
+      <div class="form-group">
+        <label class="form-label">Fecha</label>
+        <input type="date" name="date" class="form-input" value="${today}" required>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Foto *</label>
+        <div class="file-upload-container" style="text-align: center; padding: var(--space-lg); border: 2px dashed var(--color-bg-tertiary); border-radius: var(--radius-lg);">
+          <input type="file" id="photoInput" name="photo" accept="image/*" style="display: none;" required>
+          <label for="photoInput" class="btn btn-secondary">
+            📁 Seleccionar Imagen
+          </label>
+          <div style="margin-top: var(--space-md);">
+            <img id="photoPreview" src="" alt="Vista previa" style="max-width: 100%; max-height: 200px; border-radius: var(--radius-md); display: none;">
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Notas (opcional)</label>
+        <textarea name="notes" class="form-textarea" placeholder="¿Cómo te sientes? ¿Qué cambios notas?"></textarea>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closePhotoModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">💾 Guardar Foto</button>
+      </div>
+    </form>
+  `;
+}
+
+async function handleSavePhoto(e) {
+  e.preventDefault();
+
+  const formData = new FormData(e.target);
+  const fileInput = document.getElementById('photoInput');
+  const file = fileInput.files[0];
+
+  if (!file) {
+    alert('Por favor selecciona una imagen');
+    return;
+  }
+
+  try {
+    // Compress image
+    const compressedImage = await compressImage(file, 800, 0.8);
+
+    const photoData = {
+      date: formData.get('date'),
+      imageData: compressedImage,
+      notes: formData.get('notes')
+    };
+
+    await addProgressPhoto(photoData);
+
+    closePhotoModal();
+    await loadTabContent(currentTab);
+    alert('✅ Foto guardada correctamente');
+
+  } catch (error) {
+    console.error('Error saving photo:', error);
+    alert('❌ Error al guardar la foto');
+  }
 }
