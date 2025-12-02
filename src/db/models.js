@@ -14,6 +14,16 @@ import {
     clearStore
 } from './database.js';
 
+export {
+    addData,
+    getData,
+    getAllData,
+    updateData,
+    deleteData,
+    getByIndex,
+    clearStore
+};
+
 // ============================================
 // WORKOUT OPERATIONS
 // ============================================

@@ -8,7 +8,7 @@ import { DashboardView } from './views/Dashboard.js';
 import { WorkoutView, setupWorkoutView } from './views/WorkoutView.js';
 import { LogView, setupLogView } from './views/LogView.js';
 import { RoutinesView, setupRoutinesView } from './views/RoutinesView.js';
-import { ProgressView } from './views/ProgressView.js';
+import { ProgressView, setupProgressView } from './views/ProgressView.js';
 import { ExerciseLibraryView, setupExerciseLibraryView } from './views/ExerciseLibraryView.js';
 
 // App initialization
@@ -62,8 +62,13 @@ router.on('/routines', async () => {
   }, 0);
 });
 
-router.on('/progress', () => {
-  app.innerHTML = ProgressView();
+router.on('/progress', async () => {
+  app.innerHTML = await ProgressView();
+  setTimeout(() => {
+    if (typeof setupProgressView === 'function') {
+      setupProgressView();
+    }
+  }, 0);
 });
 
 router.on('/exercises', async () => {
@@ -81,16 +86,3 @@ document.body.appendChild(bottomNav);
 
 // Trigger initial route
 router.handleRouteChange();
-
-// Register service worker for PWA
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
-        console.log('✅ Service Worker registrado:', registration.scope);
-      })
-      .catch(error => {
-        console.log('❌ Error al registrar Service Worker:', error);
-      });
-  });
-}

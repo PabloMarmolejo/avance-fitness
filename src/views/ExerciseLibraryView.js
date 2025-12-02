@@ -53,7 +53,7 @@ export async function ExerciseLibraryView() {
         </div>
 
         <!-- Exercise Detail Modal -->
-        <div id="exerciseModal" class="modal hidden">
+        <div id="exerciseModal" class="modal">
           <div class="modal-content exercise-modal-content">
             <div class="modal-header">
               <h2 id="exerciseModalTitle"></h2>
@@ -117,6 +117,7 @@ function getDifficultyLabel(difficulty) {
 
 // Setup view
 export function setupExerciseLibraryView() {
+  console.log('🚀 setupExerciseLibraryView called');
   setupSearch();
   setupFilters();
 
@@ -268,12 +269,12 @@ async function showExerciseDetail(id) {
     </div>
   `;
 
-  modal.classList.remove('hidden');
+  modal.classList.add('active');
 }
 
 function closeExerciseModal() {
   const modal = document.getElementById('exerciseModal');
-  modal.classList.add('hidden');
+  modal.classList.remove('active');
 }
 
 window.useExerciseInWorkout = (exerciseName) => {

@@ -27,7 +27,7 @@ export async function RoutinesView() {
         ${routines.length === 0 ? renderEmptyState() : renderRoutinesList(routines)}
 
         <!-- Create/Edit Routine Modal -->
-        <div id="routineModal" class="modal hidden">
+        <div id="routineModal" class="modal">
           <div class="modal-content">
             <div class="modal-header">
               <h2 id="modalTitle">Nueva Rutina</h2>
@@ -164,9 +164,13 @@ function renderRoutineForm() {
 
 // Setup routines view
 export function setupRoutinesView() {
+  console.log('🚀 setupRoutinesView called');
   const createBtn = document.getElementById('createRoutineBtn');
   if (createBtn) {
+    console.log('✅ createRoutineBtn found, attaching listener');
     createBtn.addEventListener('click', () => openRoutineModal());
+  } else {
+    console.warn('⚠️ createRoutineBtn NOT found');
   }
 
   // Make functions globally available for onclick handlers
@@ -187,7 +191,7 @@ function openRoutineModal(routine = null) {
   currentEditingRoutineId = routine?.id || null;
   title.textContent = routine ? 'Editar Rutina' : 'Nueva Rutina';
 
-  modal.classList.remove('hidden');
+  modal.classList.add('active');
 
   // Pre-fill form if editing
   if (routine) {
@@ -211,7 +215,7 @@ function openRoutineModal(routine = null) {
 
 function closeRoutineModal() {
   const modal = document.getElementById('routineModal');
-  modal.classList.add('hidden');
+  modal.classList.remove('active');
   document.getElementById('routineForm').reset();
   currentEditingRoutineId = null;
 }
