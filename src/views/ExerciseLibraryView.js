@@ -2,17 +2,16 @@
  * Exercise Library View - Browse and search exercises
  */
 
-import {
-  getAllExerciseLibrary,
-  getExercisesByCategory,
-  searchExercises
-} from '../db/exerciseLibraryModels.js';
-import { CATEGORY_LABELS } from '../db/exerciseLibrary.js';
+import { CATEGORY_LABELS, EXERCISES_DATABASE } from '../db/exerciseLibrary.js';
 import { debounce } from '../utils/helpers.js';
+import { dataStore } from '../context/dataStore.js';
 
 let allExercises = [];
+let filteredExercises = [];
 let currentFilter = 'all';
 let currentSearchQuery = '';
+let currentPage = 1;
+const ITEMS_PER_PAGE = 20;
 
 export function ExerciseLibraryView() {
   return `
@@ -47,9 +46,14 @@ export function ExerciseLibraryView() {
 
         <!-- Exercise Grid -->
         <div id="exerciseGrid" class="exercise-grid">
-            <div class="loading-skeleton" style="height: 100px;"></div>
-            <div class="loading-skeleton" style="height: 100px;"></div>
-            <div class="loading-skeleton" style="height: 100px;"></div>
+            <!-- Exercises will be loaded here -->
+        </div>
+        
+        <!-- Load More Button -->
+        <div id="loadMoreContainer" style="text-align: center; margin-top: var(--space-lg); display: none;">
+            <button id="loadMoreBtn" class="btn btn-secondary">
+                ⬇️ Cargar más
+            </button>
         </div>
 
         <!-- Exercise Detail Modal -->
@@ -69,21 +73,9 @@ export function ExerciseLibraryView() {
   `;
 }
 
-function renderExercises(exercises) {
-  if (exercises.length === 0) {
-    return `
-      <div class="empty-state">
-        <div style="font-size: 4rem; margin-bottom: var(--space-lg);">🔍</div>
-        <h3>No se encontraron ejercicios</h3>
-        <p style="color: var(--color-text-secondary);">
-          Intenta con otra búsqueda o filtro
-        </p>
-      </div>
-    `;
-  }
-
-  return exercises.map(exercise => `
-    <div class="exercise-card card-glass" onclick="showExerciseDetail(${exercise.id})">
+function renderExerciseCard(exercise) {
+  return `
+    <div class="exercise-card card-glass" onclick="showExerciseDetail('${exercise.id}')">
       <div class="exercise-card-icon">
         ${CATEGORY_LABELS[exercise.category]?.emoji || '💪'}
       </div>
@@ -103,7 +95,7 @@ function renderExercises(exercises) {
       </div>
       <div class="exercise-card-arrow">→</div>
     </div>
-  `).join('');
+  `;
 }
 
 function getDifficultyLabel(difficulty) {
@@ -116,38 +108,62 @@ function getDifficultyLabel(difficulty) {
 }
 
 // Setup view
-export async function setupExerciseLibraryView() {
+export function setupExerciseLibraryView() {
   console.log('🚀 setupExerciseLibraryView called');
 
-  try {
-    allExercises = await getAllExerciseLibrary();
-    const grid = document.getElementById('exerciseGrid');
-    const subtitle = document.getElementById('subtitle');
-    if (grid) {
-      grid.innerHTML = renderExercises(allExercises);
+  // Initial load
+  loadExercisesData();
+
+  // Subscribe to changes in custom exercises
+  const unsubscribe = dataStore.subscribe((state, loading, changedCollection) => {
+    if (changedCollection === 'customExercises' || !changedCollection) {
+      loadExercisesData();
     }
-    if (subtitle) {
-      subtitle.textContent = `Descubre y aprende ${allExercises.length} ejercicios`;
-    }
-  } catch (error) {
-    console.error('Error loading exercises:', error);
+  });
+
+  if (window.currentViewUnsubscribe) {
+    window.currentViewUnsubscribe();
   }
+  window.currentViewUnsubscribe = unsubscribe;
 
   setupSearch();
   setupFilters();
+  setupLoadMore();
 
   // Make functions global for onclick
   window.showExerciseDetail = showExerciseDetail;
   window.closeExerciseModal = closeExerciseModal;
 }
 
+function loadExercisesData() {
+  const customExercises = dataStore.getCustomExercises();
+  // Merge default and custom exercises
+  // Merge default and custom exercises
+  // Assign IDs to default exercises since they don't have one in the static DB
+  const defaults = EXERCISES_DATABASE.map((ex, index) => ({
+    ...ex,
+    id: `def-${index}`
+  }));
+
+  allExercises = [...defaults, ...customExercises];
+
+  // Update subtitle
+  const subtitle = document.getElementById('subtitle');
+  if (subtitle) {
+    subtitle.textContent = `Descubre y aprende ${allExercises.length} ejercicios`;
+  }
+
+  // Reset and filter
+  applyFilters();
+}
+
 function setupSearch() {
   const searchInput = document.getElementById('exerciseSearch');
   if (!searchInput) return;
 
-  const debouncedSearch = debounce(async (query) => {
+  const debouncedSearch = debounce((query) => {
     currentSearchQuery = query.toLowerCase();
-    await updateExerciseGrid();
+    applyFilters();
   }, 300);
 
   searchInput.addEventListener('input', (e) => {
@@ -159,31 +175,38 @@ function setupFilters() {
   const filterButtons = document.querySelectorAll('.filter-chip');
 
   filterButtons.forEach(btn => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', () => {
       // Update active state
       filterButtons.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
 
       // Update filter
       currentFilter = btn.dataset.category;
-      await updateExerciseGrid();
+      applyFilters();
     });
   });
 }
 
-async function updateExerciseGrid() {
-  let exercises = [];
+function setupLoadMore() {
+  const btn = document.getElementById('loadMoreBtn');
+  if (btn) {
+    btn.addEventListener('click', () => {
+      currentPage++;
+      renderGrid(true); // Append mode
+    });
+  }
+}
 
-  // Apply category filter
-  if (currentFilter === 'all') {
-    exercises = await getAllExerciseLibrary();
-  } else {
-    exercises = await getExercisesByCategory(currentFilter);
+function applyFilters() {
+  // 1. Filter by category
+  let result = allExercises;
+  if (currentFilter !== 'all') {
+    result = result.filter(ex => ex.category === currentFilter);
   }
 
-  // Apply search filter
+  // 2. Filter by search
   if (currentSearchQuery) {
-    exercises = exercises.filter(ex =>
+    result = result.filter(ex =>
       ex.name.toLowerCase().includes(currentSearchQuery) ||
       ex.description.toLowerCase().includes(currentSearchQuery) ||
       ex.musclesWorked.primary.some(m => m.toLowerCase().includes(currentSearchQuery)) ||
@@ -191,16 +214,58 @@ async function updateExerciseGrid() {
     );
   }
 
-  // Update grid
+  filteredExercises = result;
+  currentPage = 1; // Reset pagination
+  renderGrid(false); // Replace mode
+}
+
+function renderGrid(append = false) {
   const grid = document.getElementById('exerciseGrid');
-  if (grid) {
-    grid.innerHTML = renderExercises(exercises);
+  const loadMoreContainer = document.getElementById('loadMoreContainer');
+
+  if (!grid) return;
+
+  const start = 0;
+  const end = currentPage * ITEMS_PER_PAGE;
+  const exercisesToShow = filteredExercises.slice(0, end);
+
+  // If append mode, we could optimize to only render new items, 
+  // but for simplicity and correctness with the slice logic, we'll re-render the visible set 
+  // OR we can just render the new slice. 
+  // Let's re-render the visible set to keep it simple and robust against filter changes.
+  // Actually, for "Load More", we usually want to append. 
+  // But since we are using innerHTML for the grid, we have to be careful.
+
+  if (exercisesToShow.length === 0) {
+    grid.innerHTML = `
+        <div class="empty-state">
+            <div style="font-size: 4rem; margin-bottom: var(--space-lg);">🔍</div>
+            <h3>No se encontraron ejercicios</h3>
+            <p style="color: var(--color-text-secondary);">
+            Intenta con otra búsqueda o filtro
+            </p>
+        </div>
+      `;
+    loadMoreContainer.style.display = 'none';
+    return;
+  }
+
+  // Optimized rendering: build one big string
+  const html = exercisesToShow.map(ex => renderExerciseCard(ex)).join('');
+  grid.innerHTML = html;
+
+  // Show/Hide Load More button
+  if (exercisesToShow.length < filteredExercises.length) {
+    loadMoreContainer.style.display = 'block';
+  } else {
+    loadMoreContainer.style.display = 'none';
   }
 }
 
-async function showExerciseDetail(id) {
-  // Fetch directly from DB to ensure we have the correct data
-  const exercise = await import('../db/exerciseLibraryModels.js').then(m => m.getExerciseFromLibrary(id));
+function showExerciseDetail(id) {
+  // Find exercise in memory
+  // ID can be string or number depending on source
+  const exercise = allExercises.find(ex => ex.id == id);
 
   if (!exercise) {
     console.error('Exercise not found:', id);
