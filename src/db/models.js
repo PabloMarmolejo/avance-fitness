@@ -435,7 +435,7 @@ export async function getAllSettings() {
 
 export async function initializeDefaultSettings() {
     const defaults = {
-        theme: 'dark',
+        theme: 'light',
         units: 'metric',
         weightUnit: 'kg',
         distanceUnit: 'km'

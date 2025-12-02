@@ -110,12 +110,12 @@ export function LogView() {
           </div>
 
           <!-- Form Actions -->
-          <div class="form-actions">
-            <button type="button" class="btn btn-secondary" onclick="window.history.back()">
+          <div class="form-actions" style="display: flex; gap: var(--space-md); margin-top: var(--space-xl);">
+            <button type="button" class="btn btn-secondary btn-lg" onclick="window.history.back()" style="flex: 1;">
               Cancelar
             </button>
-            <button type="submit" class="btn btn-primary btn-lg">
-              💾 Guardar Entrenamiento
+            <button type="submit" class="btn btn-primary btn-lg" style="flex: 2;">
+              💾 Guardar
             </button>
           </div>
 

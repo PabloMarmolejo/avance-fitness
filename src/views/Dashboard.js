@@ -21,15 +21,15 @@ export function DashboardView() {
             <h1 class="page-title">Dashboard</h1>
             <p class="page-subtitle">¡Bienvenido, ${user?.displayName || 'Atleta'}! ${getGreeting()}</p>
           </div>
-          <button onclick="window.location.hash = '/profile'" class="btn btn-secondary" style="padding: 8px; border-radius: 50%; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
-            <div style="width: 32px; height: 32px; background: var(--gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+          <button onclick="window.location.hash = '/profile'" class="btn-profile" aria-label="Perfil">
+            <div class="profile-avatar">
               ${user?.displayName ? user.displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U')}
             </div>
           </button>
         </div>
 
         <!-- Stats Grid -->
-        <div class="stats-grid">
+        <div class="stats-grid animate-fadeIn">
           <div class="stat-card card-glass">
             <div class="stat-icon">📅</div>
             <div class="stat-content">
@@ -68,20 +68,82 @@ export function DashboardView() {
         </div>
 
         <!-- Quick Actions -->
-        <div class="quick-actions">
+        <div class="quick-actions animate-slideInUp">
           <h3 style="margin-bottom: var(--space-md);">Acciones Rápidas</h3>
-          <div class="action-buttons">
-            <button class="btn btn-primary btn-lg" onclick="window.location.hash = '/log'">
-              ➕ Registrar Entrenamiento
+          <div class="grid grid-cols-2 gap-md">
+            <button class="action-card card-glass" onclick="window.location.hash = '/log'">
+              <div class="action-icon">➕</div>
+              <span class="action-label">Registrar</span>
             </button>
-            <button class="btn btn-secondary" onclick="window.location.hash = '/routines'">
-              📋 Ver Rutinas
+            <button class="action-card card-glass" onclick="window.location.hash = '/routines'">
+              <div class="action-icon">📋</div>
+              <span class="action-label">Rutinas</span>
             </button>
-            <button class="btn btn-secondary" onclick="window.location.hash = '/progress'">
-              📊 Ver Progreso
+            <button class="action-card card-glass" onclick="window.location.hash = '/progress'">
+              <div class="action-icon">📊</div>
+              <span class="action-label">Progreso</span>
+            </button>
+            <button class="action-card card-glass" onclick="window.location.hash = '/exercises'">
+              <div class="action-icon">📚</div>
+              <span class="action-label">Ejercicios</span>
             </button>
           </div>
         </div>
+
+        <style>
+          .btn-profile {
+            background: transparent;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            transition: transform var(--transition-fast);
+          }
+          .btn-profile:active {
+            transform: scale(0.95);
+          }
+          .profile-avatar {
+            width: 48px;
+            height: 48px;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: var(--shadow-md);
+            border: 2px solid rgba(255,255,255,0.1);
+          }
+          .action-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-lg);
+            border: none;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            gap: var(--space-sm);
+            color: var(--color-text);
+            text-align: center;
+          }
+          .action-card:hover {
+            background: var(--color-surface-hover);
+            transform: translateY(-2px);
+          }
+          .action-card:active {
+            transform: scale(0.98);
+          }
+          .action-icon {
+            font-size: 2rem;
+            margin-bottom: var(--space-xs);
+          }
+          .action-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+          }
+        </style>
 
         <div id="recent-workouts-container">
             <div class="section" style="margin-top: var(--space-2xl);">

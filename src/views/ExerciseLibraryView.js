@@ -45,7 +45,7 @@ export function ExerciseLibraryView() {
         </div>
 
         <!-- Exercise Grid -->
-        <div id="exerciseGrid" class="exercise-grid">
+        <div id="exerciseGrid" class="grid grid-cols-2 gap-md animate-fadeIn">
             <!-- Exercises will be loaded here -->
         </div>
         

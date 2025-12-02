@@ -1,9 +1,9 @@
 import './styles/index.css';
 // import { initDB } from './db/database.js';
-// import { initializeDefaultSettings } from './db/models.js';
+import { initializeDefaultSettings, getSetting } from './db/models.js';
 import { loadInitialExercises } from './db/exerciseLibraryModels.js';
 import { router } from './router/router.js';
-import { createBottomNav } from './components/BottomNav.js';
+import { createBottomNav, updateActiveNav } from './components/BottomNav.js';
 import { DashboardView, setupDashboardView } from './views/Dashboard.js';
 import { WorkoutView, setupWorkoutView } from './views/WorkoutView.js';
 import { LogView, setupLogView } from './views/LogView.js';
@@ -22,7 +22,13 @@ async function initApp() {
   console.log('🚀 Starting App Initialization...');
   try {
     // await initDB();
-    // await initializeDefaultSettings();
+    await initializeDefaultSettings();
+    const theme = await getSetting('theme');
+    if (theme === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
     console.log('Loading initial exercises...');
     await loadInitialExercises();
     console.log('✅ App inicializada correctamente');
@@ -165,6 +171,7 @@ const handleNavVisibility = () => {
     bottomNav.style.display = 'none';
   } else {
     bottomNav.style.display = 'flex';
+    updateActiveNav(currentPath);
   }
 };
 

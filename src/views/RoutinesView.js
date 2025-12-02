@@ -62,7 +62,7 @@ function renderEmptyState() {
 
 function renderRoutinesList(routines) {
   return `
-    <div class="routines-grid">
+    <div class="grid grid-cols-2 gap-md animate-fadeIn">
       ${routines.map(routine => `
         <div class="routine-card card-glass">
           <div class="routine-header">

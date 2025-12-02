@@ -1,5 +1,6 @@
 import { authStore } from '../context/authStore';
 import { router } from '../router/router';
+import { getSetting, setSetting } from '../db/models';
 
 export function ProfileView() {
     const user = authStore.getCurrentUser();
@@ -19,6 +20,20 @@ export function ProfileView() {
                 <div>
                     <h2 style="font-size: 1.25rem; margin-bottom: 0.25rem;">${user?.displayName || 'Usuario'}</h2>
                     <p style="color: var(--color-text-secondary); font-size: 0.875rem;">${user?.email}</p>
+                </div>
+            </div>
+
+            <div class="card" style="margin-bottom: 2rem;">
+                <h3 style="font-size: 1rem; margin-bottom: 1rem; color: var(--color-text-secondary);">Apariencia</h3>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-sm">
+                        <span style="font-size: 1.5rem;">🌙</span>
+                        <span>Modo Oscuro</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="theme-toggle">
+                        <span class="slider round"></span>
+                    </label>
                 </div>
             </div>
 
@@ -62,6 +77,24 @@ export function setupProfileView() {
     if (syncBtn) {
         syncBtn.addEventListener('click', () => {
             alert('La sincronización automática está activada.');
+        });
+    }
+
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        // Initialize state
+        getSetting('theme').then(theme => {
+            themeToggle.checked = theme === 'dark';
+        });
+
+        themeToggle.addEventListener('change', async (e) => {
+            const newTheme = e.target.checked ? 'dark' : 'light';
+            if (newTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+            }
+            await setSetting('theme', newTheme);
         });
     }
 }
