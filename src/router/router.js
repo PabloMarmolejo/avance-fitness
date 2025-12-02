@@ -36,7 +36,8 @@ class Router {
      * Get current route path
      */
     getCurrentPath() {
-        return window.location.hash.slice(1) || '/';
+        const hash = window.location.hash.slice(1) || '/';
+        return hash.split('?')[0];
     }
 
     /**

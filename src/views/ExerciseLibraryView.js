@@ -14,15 +14,13 @@ let allExercises = [];
 let currentFilter = 'all';
 let currentSearchQuery = '';
 
-export async function ExerciseLibraryView() {
-  allExercises = await getAllExerciseLibrary();
-
+export function ExerciseLibraryView() {
   return `
     <div class="app-container">
       <div class="app-content">
         <div class="page-header">
           <h1 class="page-title">📚 Guía de Ejercicios</h1>
-          <p class="page-subtitle">Descubre y aprende ${allExercises.length} ejercicios</p>
+          <p class="page-subtitle" id="subtitle">Explora nuestra biblioteca de ejercicios</p>
         </div>
 
         <!-- Search Bar -->
@@ -49,7 +47,9 @@ export async function ExerciseLibraryView() {
 
         <!-- Exercise Grid -->
         <div id="exerciseGrid" class="exercise-grid">
-          ${renderExercises(allExercises)}
+            <div class="loading-skeleton" style="height: 100px;"></div>
+            <div class="loading-skeleton" style="height: 100px;"></div>
+            <div class="loading-skeleton" style="height: 100px;"></div>
         </div>
 
         <!-- Exercise Detail Modal -->
@@ -116,8 +116,23 @@ function getDifficultyLabel(difficulty) {
 }
 
 // Setup view
-export function setupExerciseLibraryView() {
+export async function setupExerciseLibraryView() {
   console.log('🚀 setupExerciseLibraryView called');
+
+  try {
+    allExercises = await getAllExerciseLibrary();
+    const grid = document.getElementById('exerciseGrid');
+    const subtitle = document.getElementById('subtitle');
+    if (grid) {
+      grid.innerHTML = renderExercises(allExercises);
+    }
+    if (subtitle) {
+      subtitle.textContent = `Descubre y aprende ${allExercises.length} ejercicios`;
+    }
+  } catch (error) {
+    console.error('Error loading exercises:', error);
+  }
+
   setupSearch();
   setupFilters();
 

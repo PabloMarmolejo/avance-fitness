@@ -1,171 +1,179 @@
 /**
- * Avance Fitness - Data Models
+ * Avance Fitness - Data Models (Firestore Version)
  * 
- * CRUD operations for all entities in the app
+ * CRUD operations using Firebase Firestore and Storage
  */
 
+import { db, auth, storage } from '../firebase/services';
 import {
-    addData,
-    getData,
-    getAllData,
-    updateData,
-    deleteData,
-    getByIndex,
-    clearStore
-} from './database.js';
+    collection,
+    addDoc,
+    getDoc,
+    getDocs,
+    updateDoc,
+    deleteDoc,
+    doc,
+    query,
+    where,
+    orderBy,
+    limit,
+    writeBatch
+} from 'firebase/firestore';
+import {
+    ref,
+    uploadString,
+    getDownloadURL,
+    deleteObject
+} from 'firebase/storage';
 
-export {
-    addData,
-    getData,
-    getAllData,
-    updateData,
-    deleteData,
-    getByIndex,
-    clearStore
+// Helper to get user-specific collection reference
+const getUserCollection = (collectionName) => {
+    const user = auth.currentUser;
+    if (!user) throw new Error('User not authenticated');
+    return collection(db, 'users', user.uid, collectionName);
 };
+
+// Helper to convert Firestore doc to object with ID
+const docToObj = (doc) => ({ id: doc.id, ...doc.data() });
 
 // ============================================
 // WORKOUT OPERATIONS
 // ============================================
 
-/**
- * Create a new workout
- * @param {Object} workout - { date, time, type, duration, notes }
- * @returns {Promise<number>} workout ID
- */
 export async function createWorkout(workout) {
     const workoutData = {
         date: workout.date || new Date().toISOString().split('T')[0],
         time: workout.time || new Date().toTimeString().split(' ')[0].substring(0, 5),
-        type: workout.type, // 'Fuerza', 'Cardio', 'Funcional', 'HIIT', etc.
-        duration: workout.duration || 0, // en minutos
+        type: workout.type,
+        duration: workout.duration || 0,
         notes: workout.notes || '',
         createdAt: new Date().toISOString()
     };
-    return await addData('workouts', workoutData);
+    const docRef = await addDoc(getUserCollection('workouts'), workoutData);
+    return docRef.id;
 }
 
-/**
- * Get workout by ID
- */
 export async function getWorkout(id) {
-    return await getData('workouts', id);
+    const user = auth.currentUser;
+    if (!user) return null;
+    const docRef = doc(db, 'users', user.uid, 'workouts', id);
+    const docSnap = await getDoc(docRef);
+    return docSnap.exists() ? docToObj(docSnap) : null;
 }
 
-/**
- * Get all workouts
- */
 export async function getAllWorkouts() {
-    const workouts = await getAllData('workouts');
-    // Ordenar por fecha y hora descendente (más reciente primero)
-    return workouts.sort((a, b) => {
-        const dateA = new Date(`${a.date}T${a.time || '00:00'}`);
-        const dateB = new Date(`${b.date}T${b.time || '00:00'}`);
-        return dateB - dateA;
-    });
+    try {
+        const q = query(getUserCollection('workouts'), orderBy('date', 'desc'), orderBy('time', 'desc'));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(docToObj);
+    } catch (error) {
+        console.error("Error getting workouts:", error);
+        return [];
+    }
 }
 
-/**
- * Get workouts by date range
- */
 export async function getWorkoutsByDateRange(startDate, endDate) {
-    const allWorkouts = await getAllWorkouts();
-    return allWorkouts.filter(w => {
-        const workoutDate = new Date(w.date);
-        return workoutDate >= new Date(startDate) && workoutDate <= new Date(endDate);
-    });
+    const q = query(
+        getUserCollection('workouts'),
+        where('date', '>=', startDate),
+        where('date', '<=', endDate),
+        orderBy('date', 'desc')
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(docToObj);
 }
 
-/**
- * Get workouts by type
- */
 export async function getWorkoutsByType(type) {
-    return await getByIndex('workouts', 'type', type);
+    const q = query(getUserCollection('workouts'), where('type', '==', type), orderBy('date', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(docToObj);
 }
 
-/**
- * Update workout
- */
 export async function updateWorkout(workout) {
-    return await updateData('workouts', workout);
+    const { id, ...data } = workout;
+    const user = auth.currentUser;
+    const docRef = doc(db, 'users', user.uid, 'workouts', id);
+    await updateDoc(docRef, data);
+    return id;
 }
 
-/**
- * Delete workout (and its exercises)
- */
 export async function deleteWorkout(id) {
+    const user = auth.currentUser;
+
     // Delete associated exercises first
     const exercises = await getExercisesByWorkout(id);
-    for (const exercise of exercises) {
-        await deleteData('exercises', exercise.id);
-    }
+    const batch = writeBatch(db);
+
+    exercises.forEach(ex => {
+        const exRef = doc(db, 'users', user.uid, 'exercises', ex.id);
+        batch.delete(exRef);
+    });
+
     // Delete workout
-    return await deleteData('workouts', id);
+    const workoutRef = doc(db, 'users', user.uid, 'workouts', id);
+    batch.delete(workoutRef);
+
+    await batch.commit();
 }
 
 // ============================================
 // EXERCISE OPERATIONS
 // ============================================
 
-/**
- * Add exercise to workout
- * @param {Object} exercise - { workoutId, name, type, sets, reps, weight, duration, speed, incline, distance }
- */
 export async function addExercise(exercise) {
     const exerciseData = {
         workoutId: exercise.workoutId,
         name: exercise.name,
-        type: exercise.type, // 'strength' or 'cardio'
-        // For strength exercises
+        type: exercise.type,
         sets: exercise.sets || [],
-        // For cardio exercises
         duration: exercise.duration || 0,
         speed: exercise.speed || 0,
         incline: exercise.incline || 0,
         distance: exercise.distance || 0,
         createdAt: new Date().toISOString()
     };
-    return await addData('exercises', exerciseData);
+    const docRef = await addDoc(getUserCollection('exercises'), exerciseData);
+    return docRef.id;
 }
 
-/**
- * Get exercises by workout ID
- */
 export async function getExercisesByWorkout(workoutId) {
-    return await getByIndex('exercises', 'workoutId', workoutId);
+    const q = query(getUserCollection('exercises'), where('workoutId', '==', workoutId));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(docToObj);
 }
 
-/**
- * Get all exercises by name (for autocomplete)
- */
 export async function getAllExerciseNames() {
-    const exercises = await getAllData('exercises');
+    const q = query(getUserCollection('exercises'));
+    const querySnapshot = await getDocs(q);
+    const exercises = querySnapshot.docs.map(docToObj);
     const uniqueNames = [...new Set(exercises.map(e => e.name))];
     return uniqueNames.sort();
 }
 
-/**
- * Update exercise
- */
-export async function updateExercise(exercise) {
-    return await updateData('exercises', exercise);
+export async function getAllExercises() {
+    const q = query(getUserCollection('exercises'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(docToObj);
 }
 
-/**
- * Delete exercise
- */
+export async function updateExercise(exercise) {
+    const { id, ...data } = exercise;
+    const user = auth.currentUser;
+    const docRef = doc(db, 'users', user.uid, 'exercises', id);
+    await updateDoc(docRef, data);
+    return id;
+}
+
 export async function deleteExercise(id) {
-    return await deleteData('exercises', id);
+    const user = auth.currentUser;
+    const docRef = doc(db, 'users', user.uid, 'exercises', id);
+    await deleteDoc(docRef);
 }
 
 // ============================================
 // ROUTINE OPERATIONS
 // ============================================
 
-/**
- * Create routine
- * @param {Object} routine - { name, description, exercises: [{name, type, sets, reps, weight}] }
- */
 export async function createRoutine(routine) {
     const routineData = {
         name: routine.name,
@@ -173,60 +181,61 @@ export async function createRoutine(routine) {
         exercises: routine.exercises || [],
         createdAt: new Date().toISOString()
     };
-    return await addData('routines', routineData);
+    const docRef = await addDoc(getUserCollection('routines'), routineData);
+    return docRef.id;
 }
 
-/**
- * Get routine by ID
- */
 export async function getRoutine(id) {
-    return await getData('routines', id);
+    const user = auth.currentUser;
+    const docRef = doc(db, 'users', user.uid, 'routines', id);
+    const docSnap = await getDoc(docRef);
+    return docSnap.exists() ? docToObj(docSnap) : null;
 }
 
-/**
- * Get all routines
- */
 export async function getAllRoutines() {
-    return await getAllData('routines');
+    const q = query(getUserCollection('routines'), orderBy('name'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(docToObj);
 }
 
-/**
- * Update routine
- */
 export async function updateRoutine(routine) {
-    return await updateData('routines', routine);
+    const { id, ...data } = routine;
+    const user = auth.currentUser;
+    const docRef = doc(db, 'users', user.uid, 'routines', id);
+    await updateDoc(docRef, data);
+    return id;
 }
 
-/**
- * Delete routine
- */
 export async function deleteRoutine(id) {
-    return await deleteData('routines', id);
+    const user = auth.currentUser;
+    const docRef = doc(db, 'users', user.uid, 'routines', id);
+    await deleteDoc(docRef);
 }
 
-/**
- * Start workout from routine
- * Creates a new workout with the routine's exercises
- */
 export async function startWorkoutFromRoutine(routineId) {
     const routine = await getRoutine(routineId);
     if (!routine) throw new Error('Routine not found');
 
-    // Create workout
     const workoutId = await createWorkout({
         type: 'Rutina: ' + routine.name,
         duration: 0,
         notes: `Iniciado desde rutina: ${routine.name}`
     });
 
-    // Add exercises from routine
+    // Batch add exercises? Firestore batch limit is 500, should be fine.
+    const batch = writeBatch(db);
+    const user = auth.currentUser;
+
     for (const exercise of routine.exercises) {
-        await addExercise({
+        const newExRef = doc(collection(db, 'users', user.uid, 'exercises'));
+        batch.set(newExRef, {
             workoutId,
-            ...exercise
+            ...exercise,
+            createdAt: new Date().toISOString()
         });
     }
 
+    await batch.commit();
     return workoutId;
 }
 
@@ -234,10 +243,6 @@ export async function startWorkoutFromRoutine(routineId) {
 // BODY METRICS OPERATIONS
 // ============================================
 
-/**
- * Add body metrics
- * @param {Object} metrics - { date, weight, bmi, bodyFat, measurements: {chest, waist, arms, legs} }
- */
 export async function addBodyMetrics(metrics) {
     const metricsData = {
         date: metrics.date || new Date().toISOString().split('T')[0],
@@ -245,143 +250,142 @@ export async function addBodyMetrics(metrics) {
         bmi: metrics.bmi || 0,
         bodyFat: metrics.bodyFat || 0,
         measurements: metrics.measurements || {
-            chest: 0,
-            waist: 0,
-            arms: 0,
-            legs: 0
+            chest: 0, waist: 0, arms: 0, legs: 0
         },
         createdAt: new Date().toISOString()
     };
-    return await addData('bodyMetrics', metricsData);
+    const docRef = await addDoc(getUserCollection('bodyMetrics'), metricsData);
+    return docRef.id;
 }
 
-/**
- * Get all body metrics
- */
 export async function getAllBodyMetrics() {
-    const metrics = await getAllData('bodyMetrics');
-    return metrics.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const q = query(getUserCollection('bodyMetrics'), orderBy('date', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(docToObj);
 }
 
-/**
- * Get latest body metrics
- */
 export async function getLatestBodyMetrics() {
-    const all = await getAllBodyMetrics();
-    return all[0] || null;
+    const q = query(getUserCollection('bodyMetrics'), orderBy('date', 'desc'), limit(1));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.empty ? null : docToObj(querySnapshot.docs[0]);
 }
 
-/**
- * Update body metrics
- */
 export async function updateBodyMetrics(metrics) {
-    return await updateData('bodyMetrics', metrics);
+    const { id, ...data } = metrics;
+    const user = auth.currentUser;
+    const docRef = doc(db, 'users', user.uid, 'bodyMetrics', id);
+    await updateDoc(docRef, data);
+    return id;
 }
 
-/**
- * Delete body metrics
- */
 export async function deleteBodyMetrics(id) {
-    return await deleteData('bodyMetrics', id);
+    const user = auth.currentUser;
+    const docRef = doc(db, 'users', user.uid, 'bodyMetrics', id);
+    await deleteDoc(docRef);
 }
 
 // ============================================
-// PHOTO OPERATIONS
+// PHOTO OPERATIONS (With Firebase Storage)
 // ============================================
 
-/**
- * Add progress photo
- * @param {Object} photo - { date, imageData (base64), notes }
- */
 export async function addProgressPhoto(photo) {
+    const user = auth.currentUser;
+    let imageUrl = photo.imageData;
+
+    // If imageData is base64, upload to Storage
+    if (photo.imageData && photo.imageData.startsWith('data:image')) {
+        const timestamp = Date.now();
+        const storageRef = ref(storage, `users/${user.uid}/photos/${timestamp}.jpg`);
+        await uploadString(storageRef, photo.imageData, 'data_url');
+        imageUrl = await getDownloadURL(storageRef);
+    }
+
     const photoData = {
         date: photo.date || new Date().toISOString().split('T')[0],
-        imageData: photo.imageData, // base64 string
+        imageUrl: imageUrl, // Store URL instead of base64
         notes: photo.notes || '',
         createdAt: new Date().toISOString()
     };
-    return await addData('photos', photoData);
+
+    const docRef = await addDoc(getUserCollection('photos'), photoData);
+    return docRef.id;
 }
 
-/**
- * Get all progress photos
- */
 export async function getAllProgressPhotos() {
-    const photos = await getAllData('photos');
-    return photos.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const q = query(getUserCollection('photos'), orderBy('date', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(docToObj);
 }
 
-/**
- * Get photo by ID
- */
 export async function getProgressPhoto(id) {
-    return await getData('photos', id);
+    const user = auth.currentUser;
+    const docRef = doc(db, 'users', user.uid, 'photos', id);
+    const docSnap = await getDoc(docRef);
+    return docSnap.exists() ? docToObj(docSnap) : null;
 }
 
-/**
- * Update photo
- */
-export async function updateProgressPhoto(photo) {
-    return await updateData('photos', photo);
-}
-
-/**
- * Delete photo
- */
 export async function deleteProgressPhoto(id) {
-    return await deleteData('photos', id);
+    const user = auth.currentUser;
+    const photo = await getProgressPhoto(id);
+
+    if (photo && photo.imageUrl && photo.imageUrl.includes('firebasestorage')) {
+        // Try to delete from storage
+        try {
+            // Extract path from URL or just store path in DB? 
+            // For now, let's assume we can just delete the doc, 
+            // but ideally we should delete the file too.
+            // A better way is to store storagePath in the doc.
+            // Parsing URL is brittle.
+            const storageRef = ref(storage, photo.imageUrl);
+            await deleteObject(storageRef).catch(err => console.warn('Could not delete file from storage', err));
+        } catch (e) {
+            console.warn('Error deleting photo file:', e);
+        }
+    }
+
+    const docRef = doc(db, 'users', user.uid, 'photos', id);
+    await deleteDoc(docRef);
 }
 
 // ============================================
 // PERSONAL RECORDS OPERATIONS
 // ============================================
 
-/**
- * Add or update personal record
- * @param {Object} pr - { exerciseName, type ('weight' or 'reps'), value, date }
- */
 export async function addPersonalRecord(pr) {
     const prData = {
         exerciseName: pr.exerciseName,
-        type: pr.type, // 'weight', 'reps', 'distance', 'time'
+        type: pr.type,
         value: pr.value,
         date: pr.date || new Date().toISOString().split('T')[0],
         createdAt: new Date().toISOString()
     };
-    return await addData('personalRecords', prData);
+    const docRef = await addDoc(getUserCollection('personalRecords'), prData);
+    return docRef.id;
 }
 
-/**
- * Get all personal records
- */
 export async function getAllPersonalRecords() {
-    return await getAllData('personalRecords');
+    const q = query(getUserCollection('personalRecords'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(docToObj);
 }
 
-/**
- * Get PRs by exercise name
- */
 export async function getPersonalRecordsByExercise(exerciseName) {
-    return await getByIndex('personalRecords', 'exerciseName', exerciseName);
+    const q = query(getUserCollection('personalRecords'), where('exerciseName', '==', exerciseName));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(docToObj);
 }
 
-/**
- * Check and update PR automatically
- * Called after saving a workout to detect new records
- */
 export async function checkAndUpdatePR(exerciseName, type, value) {
     const existingPRs = await getPersonalRecordsByExercise(exerciseName);
     const samePRs = existingPRs.filter(pr => pr.type === type);
 
     if (samePRs.length === 0) {
-        // First PR for this exercise/type
         await addPersonalRecord({ exerciseName, type, value });
         return { isNewPR: true, improvement: value };
     }
 
     const maxPR = Math.max(...samePRs.map(pr => pr.value));
     if (value > maxPR) {
-        // New PR!
         await addPersonalRecord({ exerciseName, type, value });
         return { isNewPR: true, improvement: value - maxPR };
     }
@@ -389,124 +393,58 @@ export async function checkAndUpdatePR(exerciseName, type, value) {
     return { isNewPR: false };
 }
 
-/**
- * Delete personal record
- */
 export async function deletePersonalRecord(id) {
-    return await deleteData('personalRecords', id);
+    const user = auth.currentUser;
+    const docRef = doc(db, 'users', user.uid, 'personalRecords', id);
+    await deleteDoc(docRef);
 }
 
 // ============================================
 // SETTINGS OPERATIONS
 // ============================================
 
-/**
- * Get setting by key
- */
 export async function getSetting(key) {
-    return await getData('settings', key);
+    const user = auth.currentUser;
+    if (!user) return null;
+    const docRef = doc(db, 'users', user.uid, 'settings', key);
+    const docSnap = await getDoc(docRef);
+    return docSnap.exists() ? docSnap.data().value : null;
 }
 
-/**
- * Set setting
- */
 export async function setSetting(key, value) {
-    return await updateData('settings', { key, value });
+    const user = auth.currentUser;
+    if (!user) return;
+    const docRef = doc(db, 'users', user.uid, 'settings', key);
+    await updateDoc(docRef, { value }).catch(async (err) => {
+        // If document doesn't exist, set it (updateDoc fails if not exists)
+        // Or use setDoc with merge: true
+        const { setDoc } = await import('firebase/firestore');
+        await setDoc(docRef, { value });
+    });
 }
 
-/**
- * Get all settings
- */
 export async function getAllSettings() {
-    const settings = await getAllData('settings');
-    return settings.reduce((acc, setting) => {
-        acc[setting.key] = setting.value;
-        return acc;
-    }, {});
+    const q = query(getUserCollection('settings'));
+    const querySnapshot = await getDocs(q);
+    const settings = {};
+    querySnapshot.forEach(doc => {
+        settings[doc.id] = doc.data().value;
+    });
+    return settings;
 }
 
-/**
- * Initialize default settings
- */
 export async function initializeDefaultSettings() {
     const defaults = {
         theme: 'dark',
-        units: 'metric', // 'metric' or 'imperial'
+        units: 'metric',
         weightUnit: 'kg',
         distanceUnit: 'km'
     };
 
+    const currentSettings = await getAllSettings();
     for (const [key, value] of Object.entries(defaults)) {
-        const existing = await getSetting(key);
-        if (!existing) {
+        if (currentSettings[key] === undefined) {
             await setSetting(key, value);
         }
     }
-}
-
-// ============================================
-// DATA EXPORT/IMPORT
-// ============================================
-
-/**
- * Export all data as JSON
- */
-export async function exportAllData() {
-    const data = {
-        workouts: await getAllWorkouts(),
-        exercises: await getAllData('exercises'),
-        routines: await getAllRoutines(),
-        bodyMetrics: await getAllBodyMetrics(),
-        photos: await getAllProgressPhotos(),
-        personalRecords: await getAllPersonalRecords(),
-        settings: await getAllSettings(),
-        exportDate: new Date().toISOString()
-    };
-    return JSON.stringify(data, null, 2);
-}
-
-/**
- * Import data from JSON
- * WARNING: This will clear all existing data
- */
-export async function importData(jsonData) {
-    const data = JSON.parse(jsonData);
-
-    // Clear all stores
-    await clearStore('workouts');
-    await clearStore('exercises');
-    await clearStore('routines');
-    await clearStore('bodyMetrics');
-    await clearStore('photos');
-    await clearStore('personalRecords');
-    await clearStore('settings');
-
-    // Import data
-    for (const workout of data.workouts || []) {
-        await addData('workouts', workout);
-    }
-    for (const exercise of data.exercises || []) {
-        await addData('exercises', exercise);
-    }
-    for (const routine of data.routines || []) {
-        await addData('routines', routine);
-    }
-    for (const metrics of data.bodyMetrics || []) {
-        await addData('bodyMetrics', metrics);
-    }
-    for (const photo of data.photos || []) {
-        await addData('photos', photo);
-    }
-    for (const pr of data.personalRecords || []) {
-        await addData('personalRecords', pr);
-    }
-
-    // Import settings
-    if (data.settings) {
-        for (const [key, value] of Object.entries(data.settings)) {
-            await setSetting(key, value);
-        }
-    }
-
-    console.log('✅ Datos importados correctamente');
 }

@@ -2,13 +2,12 @@
  * Routines View - Manage workout routines
  */
 
-import { getAllRoutines, deleteRoutine, startWorkoutFromRoutine } from '../db/models.js';
+import { deleteRoutine, startWorkoutFromRoutine } from '../db/models.js';
 import { navigate } from '../router/router.js';
 import { setupExerciseAutocomplete } from '../utils/exerciseAutocomplete.js';
+import { dataStore } from '../context/dataStore.js';
 
-export async function RoutinesView() {
-  const routines = await getAllRoutines();
-
+export function RoutinesView() {
   return `
     <div class="app-container">
       <div class="app-content">
@@ -18,13 +17,16 @@ export async function RoutinesView() {
         </div>
 
         <div class="section-header">
-          <h3>Mis Rutinas (${routines.length})</h3>
+          <h3>Mis Rutinas</h3>
           <button class="btn btn-primary" id="createRoutineBtn">
             ➕ Crear Rutina
           </button>
         </div>
 
-        ${routines.length === 0 ? renderEmptyState() : renderRoutinesList(routines)}
+        <div id="routines-list-container">
+            <div class="loading-skeleton" style="height: 150px;"></div>
+            <div class="loading-skeleton" style="height: 150px;"></div>
+        </div>
 
         <!-- Create/Edit Routine Modal -->
         <div id="routineModal" class="modal">
@@ -165,12 +167,22 @@ function renderRoutineForm() {
 // Setup routines view
 export function setupRoutinesView() {
   console.log('🚀 setupRoutinesView called');
+
+  updateRoutinesList(dataStore.state.routines);
+
+  // Subscribe to changes
+  const unsubscribe = dataStore.subscribe((state) => {
+    updateRoutinesList(state.routines);
+  });
+
+  if (window.currentViewUnsubscribe) {
+    window.currentViewUnsubscribe();
+  }
+  window.currentViewUnsubscribe = unsubscribe;
+
   const createBtn = document.getElementById('createRoutineBtn');
   if (createBtn) {
-    console.log('✅ createRoutineBtn found, attaching listener');
     createBtn.addEventListener('click', () => openRoutineModal());
-  } else {
-    console.warn('⚠️ createRoutineBtn NOT found');
   }
 
   // Make functions globally available for onclick handlers
@@ -179,6 +191,13 @@ export function setupRoutinesView() {
   window.editRoutine = editRoutine;
   window.confirmDeleteRoutine = confirmDeleteRoutine;
   window.startFromRoutine = startFromRoutine;
+}
+
+function updateRoutinesList(routines) {
+  const container = document.getElementById('routines-list-container');
+  if (container) {
+    container.innerHTML = routines.length === 0 ? renderEmptyState() : renderRoutinesList(routines);
+  }
 }
 
 let routineExerciseCount = 0;
@@ -448,9 +467,8 @@ async function handleRoutineSave() {
     }
 
     closeRoutineModal();
-
-    // Reload view
-    navigate('/routines');
+    // No need to reload view, dataStore will update it automatically
+    // navigate('/routines'); 
 
   } catch (error) {
     console.error('Error saving routine:', error);
@@ -469,7 +487,7 @@ async function editRoutine(id) {
 async function confirmDeleteRoutine(id, name) {
   if (confirm(`¿Estás seguro de que quieres eliminar la rutina "${name}"?`)) {
     await deleteRoutine(id);
-    navigate('/routines');
+    // navigate('/routines'); // Not needed, dataStore handles update
   }
 }
 

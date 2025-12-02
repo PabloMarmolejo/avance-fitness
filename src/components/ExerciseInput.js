@@ -204,7 +204,7 @@ export function collectExerciseData(container, index) {
   const name = exerciseCard.querySelector('.exercise-name').value;
   const type = exerciseCard.querySelector('.exercise-type').value;
 
-  if (!name.trim()) {
+  if (!name || !name.trim()) {
     return null;
   }
 

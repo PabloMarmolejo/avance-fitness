@@ -2,42 +2,30 @@
  * Dashboard View - Home Screen
  */
 
-import { getAllWorkouts } from '../db/models.js';
-import { getAllPersonalRecords } from '../db/models.js';
-import { getLatestBodyMetrics } from '../db/models.js';
 import {
   calculateFrequency,
   calculateStreak,
-  formatDate,
-  getDaysAgo
+  formatDate
 } from '../utils/helpers.js';
-import { navigate } from '../router/router.js';
+import { authStore } from '../context/authStore.js';
+import { dataStore } from '../context/dataStore.js';
 
-export async function DashboardView() {
-  // Fetch data
-  const workouts = await getAllWorkouts();
-  const allPRs = await getAllPersonalRecords();
-  const latestMetrics = await getLatestBodyMetrics();
-
-  // Calculate statistics
-  const weeklyWorkouts = calculateFrequency(workouts, 7);
-  const monthlyWorkouts = calculateFrequency(workouts, 30);
-  const currentStreak = calculateStreak(workouts);
-
-  // Get recent PRs (last 5)
-  const recentPRs = allPRs
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .slice(0, 5);
-
-  // Get recent workouts (last 3)
-  const recentWorkouts = workouts.slice(0, 3);
+export function DashboardView() {
+  const user = authStore.getCurrentUser();
 
   return `
     <div class="app-container">
       <div class="app-content">
-        <div class="page-header">
-          <h1 class="page-title">Dashboard</h1>
-          <p class="page-subtitle">¡Bienvenido a Avance Fitness! ${getGreeting()}</p>
+        <div class="page-header flex justify-between items-center">
+          <div>
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-subtitle">¡Bienvenido, ${user?.displayName || 'Atleta'}! ${getGreeting()}</p>
+          </div>
+          <button onclick="window.location.hash = '/profile'" class="btn btn-secondary" style="padding: 8px; border-radius: 50%; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+            <div style="width: 32px; height: 32px; background: var(--gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+              ${user?.displayName ? user.displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U')}
+            </div>
+          </button>
         </div>
 
         <!-- Stats Grid -->
@@ -46,7 +34,7 @@ export async function DashboardView() {
             <div class="stat-icon">📅</div>
             <div class="stat-content">
               <p class="stat-label">Esta Semana</p>
-              <p class="stat-number">${weeklyWorkouts}</p>
+              <p class="stat-number" id="stat-weekly">--</p>
               <p class="stat-sublabel">entrenamientos</p>
             </div>
           </div>
@@ -55,16 +43,16 @@ export async function DashboardView() {
             <div class="stat-icon">📊</div>
             <div class="stat-content">
               <p class="stat-label">Este Mes</p>
-              <p class="stat-number">${monthlyWorkouts}</p>
+              <p class="stat-number" id="stat-monthly">--</p>
               <p class="stat-sublabel">entrenamientos</p>
             </div>
           </div>
 
-          <div class="stat-card card-glass ${currentStreak >= 3 ? 'stat-card-highlight' : ''}">
+          <div class="stat-card card-glass" id="stat-streak-card">
             <div class="stat-icon">🔥</div>
             <div class="stat-content">
               <p class="stat-label">Racha Actual</p>
-              <p class="stat-number">${currentStreak}</p>
+              <p class="stat-number" id="stat-streak">--</p>
               <p class="stat-sublabel">días consecutivos</p>
             </div>
           </div>
@@ -73,7 +61,7 @@ export async function DashboardView() {
             <div class="stat-icon">💪</div>
             <div class="stat-content">
               <p class="stat-label">Total Registrados</p>
-              <p class="stat-number">${workouts.length}</p>
+              <p class="stat-number" id="stat-total">--</p>
               <p class="stat-sublabel">entrenamientos</p>
             </div>
           </div>
@@ -95,12 +83,83 @@ export async function DashboardView() {
           </div>
         </div>
 
-        ${renderRecentWorkouts(recentWorkouts)}
-        ${renderRecentPRs(recentPRs)}
-        ${renderBodyMetrics(latestMetrics)}
+        <div id="recent-workouts-container">
+            <div class="section" style="margin-top: var(--space-2xl);">
+                <div class="section-header">
+                    <h3>Entrenamientos Recientes</h3>
+                </div>
+                <div class="loading-skeleton" style="height: 100px;"></div>
+                <div class="loading-skeleton" style="height: 100px;"></div>
+            </div>
+        </div>
+        
+        <div id="recent-prs-container"></div>
+        
+        <div id="body-metrics-container"></div>
       </div>
     </div>
   `;
+}
+
+export function setupDashboardView() {
+  // Initial render
+  updateDashboard(dataStore.state);
+
+  // Subscribe to changes
+  const unsubscribe = dataStore.subscribe((state) => {
+    updateDashboard(state);
+  });
+
+  // Cleanup subscription when view changes (optional, but good practice if we had a way to detect unmount)
+  // For now, since we re-render the whole view on navigation, we rely on the fact that 
+  // setupDashboardView is called every time. 
+  // Ideally, we should store the unsubscribe function and call it before next setup.
+  // But given the simple router, we might leak listeners if we are not careful.
+  // However, dataStore.subscribe returns an unsubscribe function.
+  // A simple way to handle this in this architecture is to attach it to the window or a global object
+  // and clear it on route change.
+
+  if (window.currentViewUnsubscribe) {
+    window.currentViewUnsubscribe();
+  }
+  window.currentViewUnsubscribe = unsubscribe;
+}
+
+function updateDashboard(state) {
+  const workouts = state.workouts;
+  const allPRs = state.personalRecords;
+  const latestMetrics = state.bodyMetrics[0] || null;
+
+  // Calculate statistics
+  const weeklyWorkouts = calculateFrequency(workouts, 7);
+  const monthlyWorkouts = calculateFrequency(workouts, 30);
+  const currentStreak = calculateStreak(workouts);
+
+  // Update Stats
+  const statWeekly = document.getElementById('stat-weekly');
+  if (statWeekly) {
+    statWeekly.textContent = weeklyWorkouts;
+    document.getElementById('stat-monthly').textContent = monthlyWorkouts;
+    document.getElementById('stat-streak').textContent = currentStreak;
+    document.getElementById('stat-total').textContent = workouts.length;
+
+    if (currentStreak >= 3) {
+      document.getElementById('stat-streak-card').classList.add('stat-card-highlight');
+    }
+
+    // Get recent PRs (last 5)
+    const recentPRs = allPRs
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 5);
+
+    // Get recent workouts (last 3)
+    const recentWorkouts = workouts.slice(0, 3);
+
+    // Render sections
+    document.getElementById('recent-workouts-container').innerHTML = renderRecentWorkouts(recentWorkouts);
+    document.getElementById('recent-prs-container').innerHTML = renderRecentPRs(recentPRs);
+    document.getElementById('body-metrics-container').innerHTML = renderBodyMetrics(latestMetrics);
+  }
 }
 
 function getGreeting() {

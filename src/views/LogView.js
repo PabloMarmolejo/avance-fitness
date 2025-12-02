@@ -201,6 +201,7 @@ function setupRemoveExerciseHandlers(container) {
 async function handleWorkoutSubmit(form, exercisesContainer, feedback) {
   try {
     // Show loading
+    feedback.classList.remove('hidden');
     feedback.className = 'form-feedback';
     feedback.innerHTML = '<div class="loading">💾 Guardando entrenamiento...</div>';
 
@@ -258,6 +259,10 @@ async function handleWorkoutSubmit(form, exercisesContainer, feedback) {
       }
     }
 
+    if (exercises.length === 0) {
+      console.warn('No valid exercises collected for this workout.');
+    }
+
     // Show success message
     let successMessage = `
       <div class="success-message">
@@ -294,6 +299,7 @@ async function handleWorkoutSubmit(form, exercisesContainer, feedback) {
 
   } catch (error) {
     console.error('Error saving workout:', error);
+    feedback.classList.remove('hidden');
     feedback.className = 'form-feedback';
     feedback.innerHTML = `
       <div class="error-message">
